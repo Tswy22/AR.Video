@@ -749,6 +749,7 @@
                     <button id="btnExp">แยกชิ้นส่วน</button>
                     <button id="btnFlow" class="on">ทางเดินไฟ</button>
                     <button id="btnFace" class="on">หันเข้ากล้อง</button>
+                    <button id="btnTilt" style="grid-column:1/-1">marker วางบนโต๊ะ · แตะเพื่อสลับเป็นบนจอ</button>
                 </div>
 
                 <button id="btnMore"
@@ -848,6 +849,7 @@
             const CREAM = '#e4e0d2', CREAM_D = '#cdc8b8', GREEN = '#1f7a4d', DARK = '#2f3438';
 
             return `
+<a-entity id="tiltRoot">
 <a-entity id="modelRoot" scale="0.7 0.7 0.7" face-cam="enabled: true">
   <a-torus position="0 0.012 0.3" rotation="-90 0 0" radius="1.05" radius-tubular="0.006" material="color:#38bdf8; opacity:0.35; transparent:true" animation="property: rotation; to: -90 360 0; dur: 24000; loop: true; easing: linear"></a-torus>
 
@@ -966,6 +968,7 @@
   </a-entity>
 
   <a-entity id="flowPWM" energy-flow="tracks: pwm; color:#eab308; count:7; speed:0.7; path: 0.10 0.45 -0.02, 0.15 0.14 0.30, 0.14 0.08 0.58, 0.03 0.30 0.85"></a-entity>
+</a-entity>
 </a-entity>`;
         }
 
@@ -981,13 +984,25 @@
 
             const buzz = ms => { if (navigator.vibrate) navigator.vibrate(ms); };
 
-            let faceCam = true;
+            let faceCam = true, wallMode = false;
             function applyFaceCam() {
                 const m = $('#modelRoot');
                 if (!m) return;
-                m.setAttribute('face-cam', 'enabled', faceCam);
-                if (!faceCam) m.setAttribute('rotation', `0 ${userYaw} 0`);
+                const on = faceCam && !wallMode;      // marker ตั้งบนจอแล้วหมุนรอบแกนตั้งไม่มีความหมาย
+                m.setAttribute('face-cam', 'enabled', on);
+                if (!on) m.setAttribute('rotation', `0 ${userYaw} 0`);
             }
+            function applyTilt() {
+                const t = $('#tiltRoot');
+                if (t) t.setAttribute('rotation', wallMode ? '-90 0 0' : '0 0 0');
+                $('#btnTilt').textContent = wallMode
+                    ? 'marker อยู่บนจอ · แตะเพื่อสลับเป็นบนโต๊ะ'
+                    : 'marker วางบนโต๊ะ · แตะเพื่อสลับเป็นบนจอ';
+                $('#btnTilt').classList.toggle('on', wallMode);
+                $('#btnFace').style.opacity = wallMode ? 0.4 : 1;
+                applyFaceCam();
+            }
+            $('#btnTilt').onclick = () => { wallMode = !wallMode; applyTilt(); buzz(14); };
             $('#btnFace').onclick = () => {
                 faceCam = !faceCam;
                 $('#btnFace').classList.toggle('on', faceCam);
@@ -1004,7 +1019,7 @@
                     if (m && where === 'preview') m.setAttribute('position', '-0.05 -0.85 0');
                     const auto = where === 'preview' ? (window.innerHeight < 800 ? 0.5 : 0.6) : 0.7;
                     $('#size').value = auto;
-                    applyStep(); applySize(auto); applyCutaway(); applyExplode(); applyFaceCam();
+                    applyStep(); applySize(auto); applyCutaway(); applyExplode(); applyTilt();
                 }, 130);
             }
 
@@ -1166,6 +1181,9 @@
                 if (++videoTries < 40) setTimeout(fixVideo, 250);   // ลองซ้ำได้ราว 10 วินาที
             }
             fixVideo();
+            window.addEventListener('resize', () => setTimeout(fixVideo, 120));
+            window.addEventListener('orientationchange', () => setTimeout(fixVideo, 350));
+            [600, 1500, 3000, 6000].forEach(t => setTimeout(fixVideo, t));
 
             const scene = document.querySelector('a-scene'); let started = false;
             function start() { if (started) return; started = true; $('#loader').style.display = 'none'; mount('marker'); setAutoplay(true); fixVideo(); }
