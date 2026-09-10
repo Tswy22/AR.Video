@@ -18,7 +18,7 @@
 
     <style>
         :root {
-            --panel: rgba(10, 16, 22, .82);
+            --panel: rgba(10, 16, 22, .84);
             --line: rgba(140, 170, 190, .22);
             --text: #e8f0f4;
             --muted: #9fb3bf;
@@ -27,6 +27,7 @@
             --pwm: #ffc94a;
             --air: #7ec8f5;
             --ok: #57d98a;
+            --bad: #ff5b5b;
         }
 
         * {
@@ -118,6 +119,68 @@
             background: var(--ok)
         }
 
+        /* แผงมิเตอร์สด */
+        #meter {
+            position: fixed;
+            right: 12px;
+            top: calc(78px + env(safe-area-inset-top, 0px));
+            z-index: 20;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 9px 12px;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            text-align: right;
+            min-width: 118px
+        }
+
+        #meter .big {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 24px;
+            line-height: 1;
+            color: var(--pwm)
+        }
+
+        #meter .big small {
+            font-size: 11px;
+            color: var(--muted);
+            margin-left: 3px
+        }
+
+        #meter .sub {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 4px
+        }
+
+        #meter.fault .big {
+            color: var(--bad);
+            animation: blink .6s steps(2) infinite
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: .25
+            }
+        }
+
+        #heatbar {
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, .14);
+            margin-top: 7px;
+            overflow: hidden
+        }
+
+        #heatfill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #4cc9f0, #ffc94a, #ff5b5b);
+            transition: width .3s
+        }
+
         #dock {
             position: fixed;
             left: 0;
@@ -159,7 +222,15 @@
             margin: 0;
             font-size: 15px;
             font-weight: 600;
-            line-height: 1.35
+            line-height: 1.35;
+            flex: 1
+        }
+
+        #btnFold {
+            flex: none;
+            padding: 4px 10px;
+            font-size: 13px;
+            align-self: center
         }
 
         #stepdesc {
@@ -167,6 +238,29 @@
             font-size: 13px;
             line-height: 1.6;
             color: #cfe0e8
+        }
+
+        #panelBody.folded~#stepspec {
+            display: none
+        }
+
+        .card.folded #stepdesc {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden
+        }
+
+        .card.folded #stepspec {
+            display: none
+        }
+
+        #panelBody {
+            display: block
+        }
+
+        #panelBody.hide {
+            display: none
         }
 
         #stepspec {
@@ -213,7 +307,8 @@
             border-radius: 9px;
             padding: 8px 12px;
             cursor: pointer;
-            -webkit-tap-highlight-color: transparent
+            -webkit-tap-highlight-color: transparent;
+            transition: background .15s, border-color .15s
         }
 
         button:active {
@@ -235,6 +330,27 @@
             flex: 1;
             min-width: 74px;
             text-align: center
+        }
+
+        button.run {
+            background: rgba(87, 217, 138, .18);
+            border-color: rgba(87, 217, 138, .6);
+            color: #ccf6dd
+        }
+
+        button.run.on {
+            background: rgba(87, 217, 138, .4)
+        }
+
+        button.stop {
+            background: rgba(255, 91, 91, .15);
+            border-color: rgba(255, 91, 91, .5);
+            color: #ffd6d6
+        }
+
+        button.tiny {
+            font-size: 12px;
+            padding: 6px 10px
         }
 
         .sliders {
@@ -264,11 +380,11 @@
             height: 22px
         }
 
-        #more {
+        .foldable {
             display: none
         }
 
-        #more.show {
+        .foldable.show {
             display: block
         }
 
@@ -305,6 +421,93 @@
             color: var(--ac)
         }
 
+        .tip {
+            margin: 9px 0 0;
+            font-size: 11.5px;
+            color: var(--ac);
+            display: flex;
+            gap: 6px;
+            align-items: center
+        }
+
+        /* การ์ดรายละเอียดชิ้นส่วนเมื่อแตะ */
+        #detail {
+            position: fixed;
+            left: 12px;
+            right: 12px;
+            bottom: 0;
+            z-index: 30;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            transform: translateY(14px);
+            opacity: 0;
+            transition: .22s
+        }
+
+        #detail.show {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto
+        }
+
+        #detail .card {
+            border-color: rgba(76, 201, 240, .5);
+            margin-bottom: 8px
+        }
+
+        #detail h3 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 600
+        }
+
+        #detail p {
+            margin: 6px 0 0;
+            font-size: 12.5px;
+            line-height: 1.6;
+            color: #cfe0e8
+        }
+
+        #detail .close {
+            position: absolute;
+            right: 10px;
+            top: 8px;
+            padding: 4px 9px;
+            font-size: 12px
+        }
+
+        .relwrap {
+            position: relative
+        }
+
+        /* แถบแจ้งความผิดพลาด */
+        #faultbar {
+            position: fixed;
+            left: 12px;
+            right: 12px;
+            top: calc(70px + env(safe-area-inset-top, 0px));
+            z-index: 25;
+            display: none;
+            background: rgba(120, 22, 22, .92);
+            border: 1px solid rgba(255, 120, 110, .7);
+            border-radius: 12px;
+            padding: 10px 13px;
+            font-size: 12.5px;
+            line-height: 1.6;
+            max-width: 520px;
+            margin: 0 auto
+        }
+
+        #faultbar b {
+            font-family: "IBM Plex Mono", monospace;
+            color: #ffd5d5
+        }
+
+        #faultbar.show {
+            display: block
+        }
+
         #errbar {
             position: fixed;
             left: 8px;
@@ -324,7 +527,7 @@
             overflow: auto
         }
 
-        @media (max-height:620px) {
+        @media (max-height:640px) {
             #stepspec {
                 display: none
             }
@@ -347,53 +550,96 @@
         </div>
     </div>
 
+    <div id="meter">
+        <div class="big"><span id="mFreq">0.00</span><small>Hz</small></div>
+        <div class="sub"><span id="mRpm">0</span> rpm · <span id="mState">STOP</span></div>
+        <div id="heatbar">
+            <div id="heatfill"></div>
+        </div>
+    </div>
+
+    <div id="faultbar"></div>
+
+    <div id="detail">
+        <div class="card relwrap">
+            <button class="close" id="detailClose">ปิด</button>
+            <h3 id="detailTitle">—</h3>
+            <p id="detailBody">—</p>
+        </div>
+    </div>
+
     <div id="dock">
-        <div class="card">
+        <div class="card" id="dockCard">
             <div class="stepline">
                 <span class="stepno" id="stepno">00</span>
                 <h2 class="steptitle" id="steptitle">—</h2>
+                <button id="btnFold" title="ย่อแผง">▾</button>
             </div>
             <p id="stepdesc">—</p>
             <p id="stepspec"></p>
             <div class="track" id="track"></div>
 
-            <div class="row">
-                <button id="prev" class="wide">ย้อนกลับ</button>
-                <button id="play" class="wide on">หยุดเล่นอัตโนมัติ</button>
-                <button id="next" class="wide">ถัดไป</button>
-            </div>
-
-            <div class="sliders">
-                <label for="freq">ความถี่เอาต์พุต</label>
-                <input id="freq" type="range" min="0" max="120" step="0.5" value="50">
-                <span class="val" id="freqval">50.00 Hz</span>
-                <label for="size">ขนาดโมเดล</label>
-                <input id="size" type="range" min="0.25" max="1.2" step="0.05" value="0.6">
-                <span class="val" id="sizeval">0.60×</span>
-            </div>
-
-            <div class="row">
-                <button id="btnCut" class="on">เปิดฝาดูภายใน</button>
-                <button id="btnExp">แยกชิ้นส่วน</button>
-                <button id="btnFlow" class="on">การไหลของพลังงาน</button>
-                <button id="btnMore">วิธีใช้</button>
-            </div>
-
-            <div id="more">
-                <div class="legend">
-                    <span><i class="sw" style="background:var(--ac)"></i>ไฟเข้า AC</span>
-                    <span><i class="sw" style="background:var(--dc)"></i>บัส DC</span>
-                    <span><i class="sw" style="background:var(--pwm)"></i>เอาต์พุต PWM</span>
-                    <span><i class="sw" style="background:var(--air)"></i>ทิศทางลม</span>
+            <div id="panelBody">
+                <div class="row">
+                    <button id="prev" class="wide">ย้อนกลับ</button>
+                    <button id="play" class="wide on">หยุดเล่นอัตโนมัติ</button>
+                    <button id="next" class="wide">ถัดไป</button>
                 </div>
-                <p class="hint">
-                    เปิดหน้านี้ผ่าน <b>https://</b> หรือ <b>localhost</b> เพื่อให้เบราว์เซอร์อนุญาตใช้กล้อง
-                    แล้วเล็งไปที่
-                    <a href="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.png"
-                        target="_blank" rel="noopener">Hiro marker</a>
-                    · ไม่มี marker ก็กด
-                    <button id="btnPreview" style="padding:3px 8px;font-size:12px">โหมดไม่ใช้ marker</button>
-                </p>
+
+                <div class="row">
+                    <button id="btnRun" class="run wide on">RUN</button>
+                    <button id="btnStop" class="stop wide">STOP</button>
+                    <button id="btnSound" class="wide">เสียงมอเตอร์</button>
+                </div>
+
+                <div class="sliders">
+                    <label for="freq">ความถี่ที่ตั้ง</label>
+                    <input id="freq" type="range" min="0" max="120" step="0.5" value="50">
+                    <span class="val" id="freqval">50.0 Hz</span>
+                    <label for="accel">เวลาเร่ง / ชะลอ</label>
+                    <input id="accel" type="range" min="1" max="20" step="0.5" value="5">
+                    <span class="val" id="accelval">5.0 s</span>
+                    <label for="size">ขนาดโมเดล</label>
+                    <input id="size" type="range" min="0.25" max="1.2" step="0.05" value="0.6">
+                    <span class="val" id="sizeval">0.60×</span>
+                </div>
+
+                <div class="row">
+                    <button id="btnCut" class="on">เปิดฝาดูภายใน</button>
+                    <button id="btnExp">แยกชิ้นส่วน</button>
+                    <button id="btnFlow" class="on">การไหลของพลังงาน</button>
+                    <button id="btnFault">จำลองความผิดพลาด</button>
+                    <button id="btnMore">วิธีใช้</button>
+                </div>
+
+                <p class="tip">แตะที่ชิ้นส่วนใดก็ได้ในภาพ เพื่อดูรายละเอียดและกระโดดไปยังหัวข้อนั้น</p>
+
+                <div id="faultPanel" class="foldable">
+                    <div class="row">
+                        <button class="tiny" data-fault="oC">E.oC กระแสเกิน</button>
+                        <button class="tiny" data-fault="oU">E.oU แรงดันเกิน</button>
+                        <button class="tiny" data-fault="oH">E.oH ความร้อนเกิน</button>
+                        <button class="tiny" data-fault="LU">E.LU ไฟตก</button>
+                        <button class="tiny" id="btnReset">RESET</button>
+                    </div>
+                </div>
+
+                <div id="more" class="foldable">
+                    <div class="legend">
+                        <span><i class="sw" style="background:var(--ac)"></i>ไฟเข้า AC</span>
+                        <span><i class="sw" style="background:var(--dc)"></i>บัส DC</span>
+                        <span><i class="sw" style="background:var(--pwm)"></i>เอาต์พุต PWM</span>
+                        <span><i class="sw" style="background:var(--air)"></i>ทิศทางลม</span>
+                    </div>
+                    <p class="hint">
+                        เล็งกล้องไปที่
+                        <a href="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.png"
+                            target="_blank" rel="noopener">Hiro marker</a>
+                        · ไม่มี marker ก็กด
+                        <button id="btnPreview" class="tiny">โหมดไม่ใช้ marker</button>
+                        แล้วลากนิ้วเพื่อหมุนโมเดล ใช้สองนิ้วเพื่อย่อขยาย
+                    </p>
+                </div>
             </div>
         </div>
     </div>
@@ -409,15 +655,28 @@
         <a-marker id="markerRoot" preset="hiro" smooth="true" smoothCount="8" smoothTolerance="0.012"
             smoothThreshold="4"></a-marker>
 
-        <a-entity camera>
-            <a-entity id="previewRoot" position="0 -0.4 -2.6"></a-entity>
+        <a-entity camera cursor="rayOrigin: mouse; fuse: false"
+            raycaster="objects: [data-part], [data-act]; interval: 120">
+            <a-entity id="previewRoot" position="0.15 0.15 -3.4"></a-entity>
         </a-entity>
     </a-scene>
 
     <script>
-        window.VFD = { freq: 50, poles: 4, flow: true };
+        /* =========================================================================
+           สถานะของไดรฟ์จำลอง
+           ========================================================================= */
+        window.VFD = {
+            target: 50,      // ความถี่ที่ตั้งไว้
+            freq: 0,         // ความถี่จริงขณะนี้ (ไล่ตาม target ตามเวลาเร่ง)
+            poles: 4,
+            ramp: 5,         // เวลาเร่ง/ชะลอ 0→50 Hz เป็นวินาที
+            running: true,
+            fault: null,
+            heat: 0,         // 0–1 ระดับความร้อนสะสมของฮีตซิงก์
+            flow: true
+        };
 
-        /* ---------- ป้ายภาษาไทยบน canvas (a-text ไม่รองรับอักษรไทย) ---------- */
+        /* ---------- ป้ายข้อความไทยบน canvas (a-text ไม่รองรับอักษรไทย) ---------- */
         AFRAME.registerComponent('th-label', {
             schema: {
                 text: { default: '' }, width: { default: 0.5 }, size: { default: 40 },
@@ -491,10 +750,11 @@
             }
         });
 
-        /* ---------- ไฮไลต์ชิ้นส่วนที่กำลังอธิบาย ---------- */
+        /* ---------- ไฮไลต์ชิ้นส่วน ---------- */
         AFRAME.registerComponent('glow', {
             schema: { active: { default: false }, color: { default: '#4cc9f0' } },
             init() { this._c = new THREE.Color(this.data.color); this._base = null; },
+            update() { this._c = new THREE.Color(this.data.color); },
             tick(t) {
                 const o = this.el.object3D;
                 if (!o) return;
@@ -512,7 +772,23 @@
             }
         });
 
-        /* ---------- เส้นทางการไหล: พลังงานไฟฟ้า (ทรงกลม) และลมระบายความร้อน (ลูกศร) ---------- */
+        /* ---------- ฮีตซิงก์เปลี่ยนสีตามความร้อนสะสม ---------- */
+        AFRAME.registerComponent('heat-tint', {
+            init() {
+                this.cool = new THREE.Color('#b3bdc2');
+                this.hot = new THREE.Color('#e0492c');
+                this.tmp = new THREE.Color();
+                this.tick = AFRAME.utils.throttleTick(this.tick, 120, this);
+            },
+            tick() {
+                this.tmp.copy(this.cool).lerp(this.hot, Math.min(1, VFD.heat));
+                this.el.object3D.traverse(n => {
+                    if (n.material && n.material.color && !n.material.map) n.material.color.copy(this.tmp);
+                });
+            }
+        });
+
+        /* ---------- เส้นทางการไหล: ไฟฟ้า (จุด) และลม (ลูกศร) ---------- */
         AFRAME.registerComponent('energy-flow', {
             schema: {
                 path: { default: '' }, color: { default: '#4cc9f0' }, count: { default: 5 },
@@ -533,7 +809,7 @@
                 let geo;
                 if (this.data.shape === 'arrow') {
                     geo = new THREE.ConeGeometry(s * 1.5, s * 3.4, 8);
-                    geo.rotateX(Math.PI / 2);                 // ให้ปลายกรวยชี้ไปทาง +Z
+                    geo.rotateX(Math.PI / 2);
                 } else {
                     geo = new THREE.SphereGeometry(s, 10, 10);
                 }
@@ -565,22 +841,23 @@
             },
             tick(t) {
                 if (!this.group) return;
-                this.group.visible = this.data.enabled && VFD.flow;
+                this.group.visible = this.data.enabled && VFD.flow && !(this.data.tracks === 'pwm' && VFD.freq < 0.2);
                 if (!this.group.visible) return;
-                const f = this.data.tracks === 'pwm' ? Math.max(0.06, VFD.freq / 50) : 1;
-                const sp = this.data.speed * f;
-                for (let k = 0; k < this.dots.length; k++) {
-                    const r = this.at(t / 1000 * sp + k * this.total / this.dots.length);
-                    this.dots[k].position.copy(r.p);
+                const k = this.data.tracks === 'pwm' ? Math.max(0.06, VFD.freq / 50)
+                    : this.data.tracks === 'air' ? Math.max(0.35, VFD.freq / 50) : 1;
+                const sp = this.data.speed * k;
+                for (let i = 0; i < this.dots.length; i++) {
+                    const r = this.at(t / 1000 * sp + i * this.total / this.dots.length);
+                    this.dots[i].position.copy(r.p);
                     if (this.data.shape === 'arrow') {
                         const dir = this.pts[r.i + 1].clone().sub(this.pts[r.i]).normalize();
-                        this.dots[k].quaternion.setFromUnitVectors(this._z, dir);
+                        this.dots[i].quaternion.setFromUnitVectors(this._z, dir);
                     }
                 }
             }
         });
 
-        /* ---------- จอรูปคลื่นจำลอง ---------- */
+        /* ---------- จอรูปคลื่น ---------- */
         AFRAME.registerComponent('scope', {
             schema: { mode: { default: 'ac' }, w: { default: 0.56 } },
             init() {
@@ -612,26 +889,33 @@
                     [['#4cc9f0', 0], ['#7ee0a0', 2.094], ['#c9a6ff', 4.188]].forEach(([col, off]) =>
                         draw(u => mid - A * Math.sin(u * Math.PI * 4 + ph + off), col, 2.5));
                 } else if (this.data.mode === 'dc') {
-                    draw(u => mid - A * (0.9 + 0.055 * Math.abs(Math.sin(u * Math.PI * 12 + ph))), '#ff6b3d', 3);
+                    // แรงดันบัสสูงขึ้นเมื่อจำลองความผิดพลาดแรงดันเกิน ต่ำลงเมื่อไฟตก
+                    const lv = VFD.fault === 'oU' ? 1.12 : VFD.fault === 'LU' ? 0.55 : 0.9;
+                    draw(u => mid - A * (lv + 0.055 * Math.abs(Math.sin(u * Math.PI * 12 + ph))),
+                        VFD.fault === 'oU' || VFD.fault === 'LU' ? '#ff5b5b' : '#ff6b3d', 3);
                     ctx.setLineDash([7, 7]); draw(() => mid - A * 0.93, 'rgba(255,201,74,0.75)', 2); ctx.setLineDash([]);
                 } else {
                     const f = Math.max(0.001, VFD.freq / 50);
                     const env = u => Math.sin(u * Math.PI * 4 * f + ph * f);
-                    ctx.beginPath(); ctx.strokeStyle = '#ffc94a'; ctx.lineWidth = 1.6;
-                    let prev = mid;
-                    for (let x = 0; x <= W; x++) {
-                        const u = x / W;
-                        const y = mid - A * (Math.sin(u * Math.PI * 120) < env(u) ? 1 : -1) * 0.98;
-                        ctx.moveTo(x, prev); ctx.lineTo(x, y); prev = y;
+                    if (VFD.freq < 0.2) {
+                        draw(() => mid, 'rgba(255,201,74,0.5)', 2);
+                    } else {
+                        ctx.beginPath(); ctx.strokeStyle = '#ffc94a'; ctx.lineWidth = 1.6;
+                        let prev = mid;
+                        for (let x = 0; x <= W; x++) {
+                            const u = x / W;
+                            const y = mid - A * (Math.sin(u * Math.PI * 120) < env(u) ? 1 : -1) * 0.98;
+                            ctx.moveTo(x, prev); ctx.lineTo(x, y); prev = y;
+                        }
+                        ctx.stroke();
+                        draw(u => mid - A * 0.72 * env(u), '#4cc9f0', 3);
                     }
-                    ctx.stroke();
-                    draw(u => mid - A * 0.72 * env(u), '#4cc9f0', 3);
                 }
                 this.tex.needsUpdate = true;
             }
         });
 
-        /* ---------- การหมุน: เพลามอเตอร์ / ใบพัดลม ---------- */
+        /* ---------- การหมุน ---------- */
         AFRAME.registerComponent('spin', {
             schema: { rate: { default: 200 }, fromFreq: { default: false } },
             tick(time, dt) {
@@ -642,9 +926,7 @@
         });
 
         /* =========================================================================
-           โมเดล VEICHI AC10 — สัดส่วนและผังภายในอ้างอิงภาพตัดขวางของผู้ผลิต
-           ตัวเครื่อง: กว้าง 0.66 สูง 1.50 ลึก 0.66 ฐานอยู่ที่ y = 0
-           ห้องซ้าย = ช่องลมอิสระ + พัดลมคู่ | กลาง = ฮีตซิงก์ | ขวา = วงจรกำลัง
+           โมเดล VEICHI AC10 — ผังภายในอ้างอิงภาพตัดขวางของผู้ผลิต
            ========================================================================= */
         function buildModel() {
             const M = (c, o) => `material="color:${c}; metalness:0.2; roughness:0.6${o !== undefined ? '; opacity:' + o + '; transparent:true' : ''}"`;
@@ -653,34 +935,37 @@
             return `
 <a-entity id="modelRoot" scale="0.6 0.6 0.6">
 
+  <!-- วงแหวนอ้างอิงบนพื้น marker -->
+  <a-torus position="-0.1 0.012 0" rotation="-90 0 0" radius="1.5" radius-tubular="0.006"
+           material="color:#4cc9f0; opacity:0.35; transparent:true"
+           animation="property: rotation; to: -90 360 0; dur: 24000; loop: true; easing: linear"></a-torus>
+
   <a-entity position="-0.30 2.15 0" billboard
             th-label="text: VEICHI AC10 Series|อินเวอร์เตอร์ปรับความเร็วรอบมอเตอร์ ทรงแคบแบบ Book design; width:1.5; size:34; accent:#ffc94a"></a-entity>
 
-  <!-- ป้ายสเปกหลัก -->
   <a-entity id="specPlate" position="1.85 1.15 0" billboard
             th-label="text: 1 เฟส 220 V • 0.75–2.2 kW (4–10 A)|3 เฟส 380 V • 0.75–22 kW|ควบคุม V/F และ Sensorless Vector|แรงบิดสตาร์ท 150% ที่ 0.5 Hz|ความถี่เอาต์พุต 0–599 Hz|ประสิทธิภาพ ≥ 96%|RS-485 Modbus RTU (CAN เสริม); width:0.86; size:28; accent:#57d98a"></a-entity>
 
   <!-- จอรูปคลื่น 3 จุดวัด -->
   <a-entity position="-1.35 1.72 0" billboard>
     <a-entity scope="mode: ac"></a-entity>
-    <a-entity position="0 -0.22 0" data-part="rectifier" glow
+    <a-entity position="0 -0.22 0"
               th-label="text: R S T • AC 50 Hz คงที่; width:0.56; size:30; accent:#4cc9f0"></a-entity>
   </a-entity>
   <a-entity position="-0.72 1.72 0" billboard>
     <a-entity scope="mode: dc"></a-entity>
-    <a-entity position="0 -0.22 0" data-part="caps" glow
+    <a-entity position="0 -0.22 0"
               th-label="text: DC Bus ≈ 1.35 × Vin; width:0.56; size:30; accent:#ff6b3d"></a-entity>
   </a-entity>
   <a-entity position="-0.09 1.72 0" billboard>
     <a-entity scope="mode: pwm"></a-entity>
-    <a-entity position="0 -0.22 0" data-part="igbt" glow
+    <a-entity position="0 -0.22 0"
               th-label="text: U V W • PWM ปรับได้; width:0.56; size:30; accent:#ffc94a"></a-entity>
   </a-entity>
 
   <!-- ====================== ตัวไดรฟ์ ====================== -->
   <a-entity id="drive" position="-0.72 0 0">
 
-    <!-- โครงเคสสีครีมตามตัวจริง ฝาหน้าโปร่งเพื่อดูภาพตัดขวาง -->
     <a-box id="shellFront" position="0 0.75 0.335" width="0.66" height="1.50" depth="0.015" ${M(CREAM, 0.12)}></a-box>
     <a-box position="0 0.75 -0.335" width="0.66" height="1.50" depth="0.015" ${M(CREAM_D)}></a-box>
     <a-box position="-0.335 0.75 0" width="0.015" height="1.50" depth="0.66" ${M(CREAM_D)}></a-box>
@@ -692,24 +977,23 @@
     ${Array.from({ length: 9 }, (_, i) =>
                 `<a-box position="-0.343 ${(0.42 + i * 0.065).toFixed(3)} -0.06" width="0.006" height="0.028" depth="0.30" ${M('#8d9aa0')}></a-box>`).join('')}
 
-    <!-- 1) แผงคีย์แพดและจอ 7 ส่วน -->
+    <!-- คีย์แพด: ปุ่ม RUN และ STOP กดได้จริงในภาพ -->
     <a-entity data-part="keypad" glow="color:#57d98a" data-explode="0 0.25 0.55">
       <a-box position="0 1.28 0.36" width="0.52" height="0.30" depth="0.05" ${M(DARK)}></a-box>
       <a-box position="0 1.36 0.388" width="0.44" height="0.11" depth="0.006" ${M('#0d0f11')}></a-box>
       <a-entity id="kpDisplay" position="0 1.36 0.394"
-                th-label="text: 50.00; width:0.36; size:52; mono:true; color:#ff3b30; bg:none; align:center"></a-entity>
+                th-label="text: 0.00; width:0.36; size:52; mono:true; color:#ff3b30; bg:none; align:center"></a-entity>
       <a-box position="-0.155 1.245 0.388" width="0.12" height="0.05" depth="0.012" ${M('#7f8b91')}></a-box>
       <a-box position="-0.155 1.175 0.388" width="0.12" height="0.05" depth="0.012" ${M('#7f8b91')}></a-box>
       <a-box position="0.005 1.245 0.388" width="0.10" height="0.05" depth="0.012" ${M('#9aa6ac')}></a-box>
       <a-box position="0.005 1.175 0.388" width="0.10" height="0.05" depth="0.012" ${M('#9aa6ac')}></a-box>
-      <a-box position="0.155 1.245 0.388" width="0.12" height="0.05" depth="0.012" ${M('#17a05f')}></a-box>
-      <a-box position="0.155 1.175 0.388" width="0.12" height="0.05" depth="0.012" ${M('#d0344a')}></a-box>
+      <a-box id="btn3dRun" data-act="run" position="0.155 1.245 0.388" width="0.12" height="0.05" depth="0.014" ${M('#17a05f')}></a-box>
+      <a-box id="btn3dStop" data-act="stop" position="0.155 1.175 0.388" width="0.12" height="0.05" depth="0.014" ${M('#d0344a')}></a-box>
       <a-cylinder position="-0.20 1.06 0.36" radius="0.038" height="0.03" rotation="90 0 0" ${M('#9c8b7a')}></a-cylinder>
       <a-entity position="0.05 1.06 0.35"
                 th-label="text: VEICHI; width:0.20; size:30; color:#1f9c8f; bg:none; align:center"></a-entity>
     </a-entity>
 
-    <!-- 2) บอร์ดควบคุมและแถวขั้วสัญญาณ -->
     <a-entity data-part="pcb" glow="color:#57d98a" data-explode="0 0.45 0.35">
       <a-box position="0 1.20 0.04" width="0.58" height="0.012" depth="0.44" ${M(GREEN)}></a-box>
       <a-box position="-0.14 1.215 0.02" width="0.11" height="0.02" depth="0.09" ${M('#111111')}></a-box>
@@ -717,16 +1001,12 @@
       <a-box position="0 1.06 0.20" width="0.50" height="0.055" depth="0.07" ${M('#2b6f4a')}></a-box>
       ${Array.from({ length: 12 }, (_, i) =>
                     `<a-cylinder position="${(-0.225 + i * 0.041).toFixed(3)} 1.06 0.238" radius="0.013" height="0.008" rotation="90 0 0" ${M('#cfd6da')}></a-cylinder>`).join('')}
-      <a-entity position="0 0.94 0.30" billboard
-                th-label="text: ขั้วสัญญาณควบคุม • RS485; width:0.40; size:30; accent:#57d98a"></a-entity>
     </a-entity>
 
-    <!-- 3) ผนังกั้นแยกห้องลมออกจากวงจร -->
     <a-entity data-part="partition" glow="color:#7ec8f5" data-explode="-0.45 0 0">
       <a-box position="-0.11 0.52 -0.08" width="0.012" height="0.92" depth="0.44" ${M('#b9c3c8', 0.55)}></a-box>
     </a-entity>
 
-    <!-- 4) พัดลมคู่ในช่องลมอิสระ -->
     <a-entity data-part="fan" glow="color:#7ec8f5" data-explode="-0.55 0 0">
       <a-cylinder position="-0.23 0.72 -0.08" radius="0.105" height="0.05" rotation="0 0 90" ${M('#3c464c')}></a-cylinder>
       <a-cylinder position="-0.23 0.42 -0.08" radius="0.105" height="0.05" rotation="0 0 90" ${M('#3c464c')}></a-cylinder>
@@ -742,26 +1022,22 @@
       </a-entity>
     </a-entity>
 
-    <!-- 5) ฮีตซิงก์ครีบนอน -->
-    <a-entity data-part="heatsink" glow="color:#e5533d" data-explode="0.15 0 -0.5">
+    <a-entity data-part="heatsink" glow="color:#e5533d" heat-tint data-explode="0.15 0 -0.5">
       <a-box position="0.10 0.50 -0.12" width="0.34" height="0.80" depth="0.02" ${M('#9aa5ab')}></a-box>
       ${Array.from({ length: 11 }, (_, i) =>
                         `<a-box position="0.10 ${(0.16 + i * 0.068).toFixed(3)} -0.22" width="0.34" height="0.014" depth="0.20" ${M('#b3bdc2')}></a-box>`).join('')}
     </a-entity>
 
-    <!-- 6) โมดูลเรียงกระแส ยึดบนฮีตซิงก์ -->
     <a-entity data-part="rectifier" glow="color:#4cc9f0" data-explode="0.5 -0.1 0.4">
       <a-box position="0.10 0.34 -0.03" width="0.22" height="0.13" depth="0.13" ${M('#12181d')}></a-box>
       <a-box position="0.10 0.41 -0.03" width="0.18" height="0.012" depth="0.10" ${M('#c0762e')}></a-box>
     </a-entity>
 
-    <!-- 7) โมดูล IGBT ยึดบนฮีตซิงก์ -->
     <a-entity data-part="igbt" glow="color:#ffc94a" data-explode="0.5 0.15 0.4">
       <a-box position="0.10 0.60 -0.03" width="0.24" height="0.15" depth="0.13" ${M('#0f1519')}></a-box>
       <a-box position="0.10 0.60 0.04" width="0.19" height="0.11" depth="0.008" ${M('#c9a227')}></a-box>
     </a-entity>
 
-    <!-- 8) บอร์ดกำลัง คาปาซิเตอร์ และโช้กวงแหวน -->
     <a-entity data-part="caps" glow="color:#ff6b3d" data-explode="0.55 0.2 0.35">
       <a-box position="0.24 0.62 -0.05" width="0.012" height="0.62" depth="0.44" ${M(GREEN)}></a-box>
       <a-cylinder position="0.19 0.72 0.09" radius="0.075" height="0.28" rotation="0 0 90" ${M('#22323c')}></a-cylinder>
@@ -769,12 +1045,12 @@
       <a-box position="0.19 0.90 -0.02" width="0.16" height="0.012" depth="0.30" ${M('#d0561f')}></a-box>
       <a-box position="0.19 0.54 -0.02" width="0.16" height="0.012" depth="0.30" ${M('#2b6cb0')}></a-box>
     </a-entity>
+
     <a-entity data-part="emc" glow="color:#4cc9f0" data-explode="0.3 0.5 0.35">
       <a-torus position="0.05 0.95 0.10" radius="0.075" radius-tubular="0.026" rotation="0 90 0" ${M('#d8b13a')}></a-torus>
       <a-box position="-0.02 0.95 -0.12" width="0.16" height="0.10" depth="0.16" ${M('#2c3a44')}></a-box>
     </a-entity>
 
-    <!-- 9) ขั้วต่อกำลัง R S T และ U V W -->
     <a-entity data-part="input" glow="color:#4cc9f0" data-explode="-0.35 -0.35 0.4">
       <a-box position="-0.13 0.14 0.20" width="0.26" height="0.10" depth="0.12" ${M('#1d2830')}></a-box>
       ${[-0.21, -0.13, -0.05].map(x => `<a-cylinder position="${x} 0.14 0.262" radius="0.021" height="0.012" rotation="90 0 0" ${M('#cbd5da')}></a-cylinder>`).join('')}
@@ -788,20 +1064,17 @@
                 th-label="text: U V W • ออกสู่มอเตอร์; width:0.36; size:32; accent:#ffc94a"></a-entity>
     </a-entity>
 
-    <!-- เส้นทางไฟฟ้าภายใน -->
     <a-entity id="flowAC" energy-flow="tracks: ac; color:#4cc9f0; count:6; speed:0.5;
       path: -0.13 0.09 0.26, -0.02 0.95 0.02, 0.10 0.34 0.06"></a-entity>
     <a-entity id="flowDC" energy-flow="tracks: dc; color:#ff6b3d; count:6; speed:0.6;
       path: 0.10 0.34 0.06, 0.19 0.54 0.02, 0.19 0.86 0.02, 0.19 0.60 0.06, 0.10 0.60 0.08"></a-entity>
-
-    <!-- ทิศทางลม: เข้าด้านหลังขวา ผ่านครีบ ออกทางซ้าย -->
     <a-entity id="flowAirIn" energy-flow="tracks: air; shape: arrow; line: false; color:#7ec8f5;
       count:4; speed:0.42; size:0.026; path: 0.52 0.20 -0.22, 0.12 0.22 -0.22, 0.10 0.60 -0.22"></a-entity>
     <a-entity id="flowAirOut" energy-flow="tracks: air; shape: arrow; line: false; color:#7ec8f5;
       count:4; speed:0.42; size:0.026; path: 0.10 0.72 -0.22, -0.23 0.72 -0.10, -0.60 0.80 -0.05"></a-entity>
   </a-entity>
 
-  <!-- ====================== มอเตอร์เหนี่ยวนำ ====================== -->
+  <!-- ====================== มอเตอร์ ====================== -->
   <a-entity id="motorGroup" position="0.95 0.38 0" data-part="motor" glow="color:#ffc94a">
     <a-cylinder rotation="0 0 90" radius="0.28" height="0.56" ${M('#2f5d78')}></a-cylinder>
     <a-cylinder position="-0.30 0 0" rotation="0 0 90" radius="0.29" height="0.05" ${M('#24485c')}></a-cylinder>
@@ -816,7 +1089,7 @@
       </a-entity>
     </a-entity>
     <a-entity id="motorLabel" position="0 -0.56 0" billboard
-              th-label="text: มอเตอร์เหนี่ยวนำ 3 เฟส 4 ขั้ว|1500 rpm; width:0.54; size:30; accent:#ffc94a"></a-entity>
+              th-label="text: มอเตอร์เหนี่ยวนำ 3 เฟส 4 ขั้ว|0 rpm; width:0.54; size:30; accent:#ffc94a"></a-entity>
   </a-entity>
 
   <a-entity id="flowPWM" energy-flow="tracks: pwm; color:#ffc94a; count:7; speed:0.7;
@@ -827,85 +1100,128 @@
 </a-entity>`;
         }
 
+        /* ---------- รายละเอียดชิ้นส่วนเมื่อผู้ใช้แตะ ---------- */
+        const PARTS = {
+            keypad: { n: 'คีย์แพดและจอแสดงผล', s: 5, d: 'จอ 7 ส่วนแสดงความถี่ กระแส หรือรอบมอเตอร์ ปุ่มเขียวคือ RUN ปุ่มแดงคือ STOP/RESET และปุ่มหมุนใช้ปรับความถี่ด้วยมือ ลองแตะปุ่มเขียวหรือแดงในภาพเพื่อสั่งเดินและหยุดจริง' },
+            pcb: { n: 'บอร์ดควบคุม', s: 5, d: 'ไมโครคอนโทรลเลอร์สร้างสัญญาณ PWM คำนวณโหมด V/F หรือ Sensorless Vector และดูแลระบบป้องกันทั้งหมด ด้านหน้าเป็นแถวขั้วสัญญาณสำหรับต่ออินพุตดิจิทัล อนาล็อก และ RS-485' },
+            partition: { n: 'ผนังกั้นช่องลม', s: 7, d: 'แผ่นกั้นที่แยกทางลมออกจากห้องวงจร ทำให้ฝุ่นและละอองที่ไหลผ่านครีบไม่เข้าไปเกาะบนแผงอิเล็กทรอนิกส์ เป็นเหตุผลที่ AC10 ทนสภาพแวดล้อมโรงงานได้ดี' },
+            fan: { n: 'พัดลมระบายความร้อน', s: 7, d: 'พัดลมสองตัวดูดอากาศผ่านครีบฮีตซิงก์แล้วเป่าออกด้านข้าง ทำงานเฉพาะเมื่ออุณหภูมิถึงเกณฑ์เพื่อยืดอายุพัดลม ถ้าอุดตันจะเกิดความผิดพลาด E.oH' },
+            heatsink: { n: 'ฮีตซิงก์', s: 7, d: 'อะลูมิเนียมครีบรับความร้อนจากไดโอดและ IGBT ที่ยึดติดอยู่ สีในภาพจะเปลี่ยนเป็นแดงเมื่อโหลดสูงขึ้น ตัวเครื่องทำงานได้ถึง 50°C โดยไม่ต้องลดทอนกำลัง' },
+            rectifier: { n: 'ไดโอดบริดจ์เรียงกระแส', s: 2, d: 'แปลงไฟสลับเป็นไฟตรง ใช้ไดโอด 6 ตัวสำหรับไฟ 3 เฟส แรงดันบัส DC ที่ได้ประมาณ 1.35 เท่าของแรงดันไฟเข้า จึงเป็นจุดที่ร้อนมากและต้องยึดบนฮีตซิงก์' },
+            igbt: { n: 'โมดูล IGBT', s: 4, d: 'หัวใจของอินเวอร์เตอร์ สวิตช์ 6 ตัวสลับต่อขั้วบวกลบของบัส DC เข้ากับสาย U V W ด้วยความถี่สวิตชิ่งระดับกิโลเฮิรตซ์ ความกว้างพัลส์ที่แปรตามเวลาทำให้กระแสในมอเตอร์เป็นรูปคลื่นไซน์' },
+            caps: { n: 'คาปาซิเตอร์บัส DC', s: 3, d: 'กรองระลอกคลื่นให้ไฟตรงเรียบและเก็บพลังงานสำรองไว้จ่ายตอนโหลดกระชาก อันตรายที่สุดในเครื่อง เพราะยังเก็บประจุหลังตัดไฟ ต้องรอและวัดแรงดันให้เป็นศูนย์ก่อนสัมผัส' },
+            emc: { n: 'โช้กและตัวกรอง EMC', s: 1, d: 'ลดสัญญาณรบกวนความถี่สูงที่เกิดจากการสวิตช์ ไม่ให้ย้อนกลับไปรบกวนอุปกรณ์อื่นในสายเมน โช้กวงแหวนยังช่วยลดฮาร์มอนิกของกระแสด้านไฟเข้า' },
+            input: { n: 'ขั้วไฟเข้า R S T', s: 1, d: 'จุดต่อไฟเมน รุ่น 1 เฟส 220 V รองรับ 0.75–2.2 kW ส่วนรุ่น 3 เฟส 380 V รองรับได้ถึง 22 kW ห้ามสลับกับขั้วเอาต์พุตเด็ดขาด เพราะจะทำให้โมดูลกำลังพังทันที' },
+            output: { n: 'ขั้วเอาต์พุต U V W', s: 6, d: 'จ่ายไฟ PWM ให้มอเตอร์ สลับสายสองเส้นใดก็ได้เพื่อกลับทิศหมุน ห้ามต่อคาปาซิเตอร์แก้เพาเวอร์แฟกเตอร์ที่ด้านนี้ และไม่ควรใช้สายยาวเกินคู่มือกำหนดเพราะจะเกิดแรงดันสะท้อน' },
+            motor: { n: 'มอเตอร์เหนี่ยวนำ', s: 6, d: 'ความเร็วรอบซิงโครนัส n = 120 × f ÷ จำนวนขั้ว มอเตอร์ 4 ขั้วที่ 50 Hz จึงได้ 1500 rpm ความเร็วจริงจะต่ำกว่านี้เล็กน้อยตามค่าสลิป ลองปรับความถี่แล้วดูเพลาหมุนเปลี่ยนไป' }
+        };
+
+        /* ---------- ความผิดพลาดที่จำลองได้ ---------- */
+        const FAULTS = {
+            oC: {
+                code: 'E.oC', n: 'กระแสเกิน (Over Current)', part: 'igbt',
+                d: 'กระแสเอาต์พุตพุ่งเกินพิกัด มักเกิดจากตั้งเวลาเร่งสั้นเกินไป โหลดติดขัด หรือสายมอเตอร์ลัดวงจร แก้โดยยืดเวลาเร่ง ตรวจโหลดที่หมุนฝืด และวัดความต้านทานขดลวด'
+            },
+            oU: {
+                code: 'E.oU', n: 'แรงดันบัสเกิน (Over Voltage)', part: 'caps',
+                d: 'มอเตอร์ชะลอตัวเร็วเกินไปจนคายพลังงานกลับเข้าบัส DC ทำให้แรงดันพุ่ง แก้โดยยืดเวลาชะลอ เปิดฟังก์ชันป้องกันแรงดันเกินขณะชะลอ หรือติดตั้งตัวต้านทานเบรก'
+            },
+            oH: {
+                code: 'E.oH', n: 'ความร้อนเกิน (Over Heat)', part: 'heatsink',
+                d: 'อุณหภูมิฮีตซิงก์สูงเกินเกณฑ์ ตรวจว่าพัดลมยังหมุน ครีบระบายมีฝุ่นอุดตันหรือไม่ อุณหภูมิในตู้สูงเกิน 50°C หรือติดตั้งชิดกันจนลมระบายไม่ออก'
+            },
+            LU: {
+                code: 'E.LU', n: 'แรงดันตก (Under Voltage)', part: 'input',
+                d: 'แรงดันไฟเข้าตกต่ำกว่าเกณฑ์ อาจเกิดจากไฟตกชั่วขณะ สายเมนเล็กเกินไป หรือมีโหลดใหญ่สตาร์ทพร้อมกัน AC10 มีฟังก์ชันประคองไม่ให้หยุดทันทีเมื่อไฟตกชั่วครู่'
+            }
+        };
+
         /* ---------- เนื้อหาบทเรียน ---------- */
         const STEPS = [
             {
                 t: 'ภาพรวมการทำงาน',
                 d: 'AC10 รับไฟ AC ความถี่คงที่จากสายเมน แปลงเป็นไฟ DC แล้วสร้างไฟ AC ขึ้นใหม่ที่ปรับแรงดันและความถี่ได้ เพื่อควบคุมความเร็วรอบมอเตอร์เหนี่ยวนำ ใช้กับพัดลม ปั๊มน้ำ สายพานลำเลียง และเครื่องจักรอัตโนมัติ',
-                s: 'เส้นทางพลังงาน: R S T → เรียงกระแส → บัส DC → IGBT → U V W → มอเตอร์ • ประสิทธิภาพรวมของตัวขับ ≥ 96%',
+                s: 'เส้นทางพลังงาน: R S T → เรียงกระแส → บัส DC → IGBT → U V W → มอเตอร์ • ประสิทธิภาพรวม ≥ 96%',
                 p: [], f: { ac: 1, dc: 1, pwm: 1 }
             },
-
             {
                 t: 'ไฟเข้าและตัวกรองสัญญาณรบกวน',
                 d: 'ไฟจ่ายเข้าที่ขั้วด้านล่างของตัวเครื่อง ผ่านโช้กวงแหวนและตัวกรอง EMC เพื่อลดสัญญาณรบกวนที่จะย้อนกลับเข้าสายเมน',
-                s: 'รุ่น 1 เฟส 220 V ครอบคลุม 0.75–2.2 kW (กระแสเอาต์พุต 4–10 A) รุ่น 3 เฟส 380 V ครอบคลุม 0.75–22 kW ต้องดูพิกัดจากป้ายเนมเพลตก่อนต่อไฟทุกครั้ง',
+                s: 'รุ่น 1 เฟส 220 V ครอบคลุม 0.75–2.2 kW (4–10 A) รุ่น 3 เฟส 380 V ครอบคลุม 0.75–22 kW',
                 p: ['input', 'emc'], f: { ac: 1 }
             },
-
             {
                 t: 'วงจรเรียงกระแส แปลง AC เป็น DC',
                 d: 'ไดโอดบริดจ์ที่ยึดอยู่บนฮีตซิงก์เรียงไฟสลับให้เป็นไฟตรงแบบมีระลอกคลื่น แรงดันบัส DC ที่ได้ประมาณ 1.35 เท่าของแรงดันไฟเข้า',
                 s: 'ไฟเข้า 380 V จะได้บัส DC ราว 513 V ดูจอด้านซ้าย: ไซน์สามเฟสกลายเป็นไฟตรง 6 พัลส์',
                 p: ['rectifier'], f: { ac: 1 }
             },
-
             {
                 t: 'บัส DC และคาปาซิเตอร์',
                 d: 'คาปาซิเตอร์อิเล็กโทรไลติกบนบอร์ดกำลังกรองระลอกคลื่นให้ไฟตรงเรียบและเก็บพลังงานสำรอง มีวงจรพรีชาร์จจำกัดกระแสพุ่งตอนเปิดเครื่อง',
                 s: 'อันตราย: คาปาซิเตอร์ยังเก็บประจุหลังตัดไฟ ต้องรออย่างน้อย 5 นาทีและวัดแรงดันให้เป็นศูนย์ก่อนสัมผัส',
                 p: ['caps'], f: { dc: 1 }
             },
-
             {
                 t: 'อินเวอร์เตอร์ IGBT สร้างไฟ AC ใหม่',
                 d: 'IGBT หกตัวสลับต่อขั้วบวกและลบของบัส DC เข้ากับสาย U V W ด้วยเทคนิค PWM ความกว้างพัลส์ที่เปลี่ยนไปทำให้กระแสในขดลวดมอเตอร์มีรูปคลื่นใกล้เคียงไซน์',
                 s: 'ความถี่สวิตชิ่งปรับได้ราว 2–16 kHz ตั้งสูงมอเตอร์เงียบขึ้นแต่ IGBT ร้อนขึ้น',
                 p: ['igbt'], f: { dc: 1, pwm: 1 }
             },
-
             {
                 t: 'บอร์ดควบคุมและคีย์แพด',
-                d: 'ไมโครคอนโทรลเลอร์คำนวณจังหวะจุดชนวน IGBT ได้สองโหมด คือ V/F ที่เพิ่มแรงดันตามความถี่แบบสัดส่วน และ Sensorless Vector Control ที่ประมาณตำแหน่งฟลักซ์ในมอเตอร์เพื่อคุมแรงบิดได้แม่นยำกว่าโดยไม่ต้องใช้เอ็นโคดเดอร์',
-                s: 'โหมดเวกเตอร์ให้แรงบิดสตาร์ทถึง 150% ที่ความถี่เพียง 0.5 Hz เหมาะกับโหลดที่ออกตัวหนัก สั่งงานได้จากคีย์แพด ขั้วสัญญาณ หรือ RS-485 Modbus RTU',
+                d: 'ไมโครคอนโทรลเลอร์คำนวณจังหวะจุดชนวน IGBT ได้สองโหมด คือ V/F ที่เพิ่มแรงดันตามความถี่แบบสัดส่วน และ Sensorless Vector Control ที่ประมาณฟลักซ์ในมอเตอร์เพื่อคุมแรงบิดได้แม่นยำโดยไม่ต้องใช้เอ็นโคดเดอร์',
+                s: 'โหมดเวกเตอร์ให้แรงบิดสตาร์ทถึง 150% ที่ความถี่เพียง 0.5 Hz เหมาะกับโหลดที่ออกตัวหนัก',
                 p: ['pcb', 'keypad'], f: {}
             },
-
             {
                 t: 'เอาต์พุตสู่มอเตอร์',
-                d: 'ไฟ PWM ออกที่ขั้ว U V W ความเร็วรอบซิงโครนัสคำนวณจาก n = 120 × f ÷ จำนวนขั้ว ลองเลื่อนแถบความถี่แล้วดูเพลามอเตอร์ ตัวเลขบนจอ และรูปคลื่นเปลี่ยนตามกัน',
-                s: 'AC10 จ่ายได้ 0–599 Hz มอเตอร์ 4 ขั้วที่ 50 Hz ได้ 1500 rpm ที่ 25 Hz เหลือ 750 rpm (เกิน 50 Hz แรงบิดจะลดลงเพราะแรงดันเพิ่มตามไม่ได้แล้ว ส่วนความเร็วเพลาในภาพลดสเกลลงให้ตามองทัน)',
+                d: 'ไฟ PWM ออกที่ขั้ว U V W ความเร็วรอบซิงโครนัสคำนวณจาก n = 120 × f ÷ จำนวนขั้ว ลองกด RUN แล้วดูความถี่ค่อย ๆ ไต่ขึ้นตามเวลาเร่งที่ตั้งไว้ พร้อมเพลามอเตอร์และรูปคลื่นที่เปลี่ยนตาม',
+                s: 'AC10 จ่ายได้ 0–599 Hz เกิน 50 Hz แรงบิดจะลดลงเพราะแรงดันเพิ่มตามไม่ได้แล้ว',
                 p: ['output', 'motor'], f: { pwm: 1 }
             },
-
             {
                 t: 'ช่องลมอิสระและการระบายความร้อน',
-                d: 'ผนังกั้นแยกห้องลมออกจากห้องวงจร อากาศเย็นถูกดูดเข้าด้านหลัง ผ่านครีบฮีตซิงก์ที่รับความร้อนจากไดโอดและ IGBT แล้วพัดลมคู่เป่าออก ฝุ่นและละอองจึงไม่ผ่านเข้าไปเกาะแผงวงจร',
-                s: 'ทำงานได้ถึงอุณหภูมิรอบข้าง 50°C โดยไม่ต้องลดทอนกำลัง ตัวเครื่องทรงแคบติดตั้งเรียงชิดกันได้โดยไม่ต้องเว้นระยะด้านข้าง ประหยัดพื้นที่ตู้ได้ถึง 60% และยึดบนราง DIN ได้',
+                d: 'ผนังกั้นแยกห้องลมออกจากห้องวงจร อากาศเย็นถูกดูดเข้าด้านหลัง ผ่านครีบฮีตซิงก์ที่รับความร้อนจากไดโอดและ IGBT แล้วพัดลมคู่เป่าออก ฝุ่นและละอองจึงไม่เข้าไปเกาะแผงวงจร',
+                s: 'ทำงานได้ถึง 50°C โดยไม่ลดทอนกำลัง ติดตั้งเรียงชิดกันได้ ประหยัดพื้นที่ตู้ถึง 60% และยึดบนราง DIN ได้',
                 p: ['heatsink', 'fan', 'partition'], f: { air: 1 }
             },
-
             {
                 t: 'ระบบป้องกันในตัว',
                 d: 'วงจรตรวจจับกระแสจำกัดรูปคลื่นแบบ wave-by-wave ตัดยอดกระแสทีละลูกคลื่นเพื่อกันไฟกระชากตอนเร่ง มีการป้องกันแรงดันเกิน แรงดันตกชั่วขณะ มอเตอร์โอเวอร์โหลด และเอาต์พุตลัดวงจรลงดิน',
-                s: 'การจำกัดกระแสแบบนี้ช่วยให้ไดรฟ์ชะลอการเร่งแทนที่จะทริปหยุดทันที เครื่องจักรจึงเดินต่อได้โดยไม่สะดุด',
+                s: 'กดปุ่มจำลองความผิดพลาดด้านล่างเพื่อดูรหัสบนจอและวิธีแก้ไขแต่ละกรณี',
                 p: ['igbt', 'pcb'], f: { dc: 1, pwm: 1 }
             }
         ];
 
-        /* ---------- ตรรกะควบคุม ---------- */
+        /* =========================================================================
+           ตรรกะควบคุมทั้งหมด
+           ========================================================================= */
         (function () {
             const $ = s => document.querySelector(s);
             let step = 0, autoplay = true, timer = null, exploded = false, cutaway = true, mounted = 'marker';
+            let userYaw = 0, userScale = null;
 
+            const buzz = ms => { if (navigator.vibrate) navigator.vibrate(ms); };
+
+            /* ---------- ติดตั้งโมเดล ---------- */
             function mount(where) {
                 const marker = $('#markerRoot'), preview = $('#previewRoot');
                 marker.innerHTML = ''; preview.innerHTML = '';
                 (where === 'marker' ? marker : preview).innerHTML = buildModel();
                 mounted = where;
-                setTimeout(() => { applyStep(); applySize(+$('#size').value); applyCutaway(); applyExplode(); applyFreq(); }, 130);
+                userYaw = 0;
+                setTimeout(() => {
+                    // โหมดไม่ใช้ marker: เลื่อนจุดหมุนให้ตัวเครื่องอยู่กลางจอ และย่อลงให้พ้นแผงควบคุม
+                    const m = $('#modelRoot');
+                    if (m && where === 'preview') m.setAttribute('position', '-0.15 -0.7 0');
+                    const auto = where === 'preview' ? (window.innerHeight < 800 ? 0.42 : 0.5) : 0.6;
+                    $('#size').value = auto;
+                    applyStep(); applySize(auto); applyCutaway(); applyExplode();
+                }, 130);
             }
 
+            /* ---------- แถบความคืบหน้า ---------- */
             const track = $('#track');
             STEPS.forEach(() => track.appendChild(document.createElement('i')));
 
@@ -919,15 +1235,21 @@
 
                 const plate = $('#stepPlate');
                 if (plate) plate.setAttribute('th-label', 'text', `${step === 0 ? '' : step + ') '}${st.t}|${st.d}`);
-
-                document.querySelectorAll('[data-part]').forEach(el => {
-                    if (el.components && el.components.glow) el.setAttribute('glow', 'active', st.p.includes(el.dataset.part));
-                });
+                highlight(st.p);
 
                 const f = st.f || {};
                 const setFlow = (id, on) => { const e = $(id); if (e) e.setAttribute('energy-flow', 'enabled', !!on); };
                 setFlow('#flowAC', f.ac); setFlow('#flowDC', f.dc); setFlow('#flowPWM', f.pwm);
                 setFlow('#flowAirIn', f.air); setFlow('#flowAirOut', f.air);
+            }
+
+            function highlight(list, color) {
+                document.querySelectorAll('[data-part]').forEach(el => {
+                    if (!el.components || !el.components.glow) return;
+                    const on = list.includes(el.dataset.part);
+                    el.setAttribute('glow', 'active', on);
+                    if (on && color) el.setAttribute('glow', 'color', color);
+                });
             }
 
             function go(n) { step = (n + STEPS.length) % STEPS.length; applyStep(); }
@@ -937,15 +1259,80 @@
                 $('#play').classList.toggle('on', on);
                 $('#play').textContent = on ? 'หยุดเล่นอัตโนมัติ' : 'เล่นอัตโนมัติ';
                 clearInterval(timer);
-                if (on) timer = setInterval(() => go(step + 1), 8000);
+                if (on) timer = setInterval(() => go(step + 1), 9000);
             }
 
             $('#next').onclick = () => { setAutoplay(false); go(step + 1); };
             $('#prev').onclick = () => { setAutoplay(false); go(step - 1); };
             $('#play').onclick = () => setAutoplay(!autoplay);
+
+            /* พับแผงควบคุมเพื่อคืนพื้นที่จอให้ภาพ AR */
+            let folded = false;
+            function setFold(v) {
+                folded = v;
+                $('#panelBody').classList.toggle('hide', v);
+                $('#dockCard').classList.toggle('folded', v);
+                $('#btnFold').textContent = v ? '▴' : '▾';
+                $('#btnFold').title = v ? 'ขยายแผง' : 'ย่อแผง';
+            }
+            $('#btnFold').onclick = () => { setFold(!folded); buzz(12); };
+            setFold(window.innerHeight < 900);   // มือถือแนวตั้งเริ่มต้นแบบพับไว้
+
             $('#btnMore').onclick = () => { $('#more').classList.toggle('show'); $('#btnMore').classList.toggle('on'); };
             $('#btnFlow').onclick = () => { VFD.flow = !VFD.flow; $('#btnFlow').classList.toggle('on', VFD.flow); };
+            $('#btnFault').onclick = () => { $('#faultPanel').classList.toggle('show'); $('#btnFault').classList.toggle('on'); };
 
+            /* ---------- เดิน หยุด และความผิดพลาด ---------- */
+            function setRunning(on) {
+                if (on && VFD.fault) return;          // ต้องรีเซ็ตความผิดพลาดก่อน
+                VFD.running = on;
+                $('#btnRun').classList.toggle('on', on);
+                buzz(on ? 18 : 12);
+            }
+            $('#btnRun').onclick = () => setRunning(true);
+            $('#btnStop').onclick = () => setRunning(false);
+
+            function trigFault(key) {
+                const f = FAULTS[key];
+                VFD.fault = key;
+                VFD.running = false;
+                $('#btnRun').classList.remove('on');
+                $('#meter').classList.add('fault');
+                const bar = $('#faultbar');
+                bar.innerHTML = `<b>${f.code}</b> · ${f.n}<br>${f.d}`;
+                bar.classList.add('show');
+                if (key === 'oH') VFD.heat = 1;
+                highlight([f.part], '#ff5b5b');
+                setAutoplay(false);
+                buzz([40, 60, 40]);
+            }
+            function clearFault() {
+                VFD.fault = null;
+                $('#meter').classList.remove('fault');
+                $('#faultbar').classList.remove('show');
+                applyStep();
+            }
+            document.querySelectorAll('[data-fault]').forEach(b => b.onclick = () => trigFault(b.dataset.fault));
+            $('#btnReset').onclick = () => { clearFault(); setRunning(true); };
+
+            /* ---------- แถบเลื่อน ---------- */
+            $('#freq').addEventListener('input', e => {
+                VFD.target = +e.target.value;
+                $('#freqval').textContent = VFD.target.toFixed(1) + ' Hz';
+            });
+            $('#accel').addEventListener('input', e => {
+                VFD.ramp = +e.target.value;
+                $('#accelval').textContent = VFD.ramp.toFixed(1) + ' s';
+            });
+            function applySize(v) {
+                userScale = v;
+                const m = $('#modelRoot');
+                if (m) m.setAttribute('scale', `${v} ${v} ${v}`);
+                $('#sizeval').textContent = (+v).toFixed(2) + '×';
+            }
+            $('#size').addEventListener('input', e => applySize(+e.target.value));
+
+            /* ---------- มุมมอง ---------- */
             function applyCutaway() {
                 const s = $('#shellFront');
                 if (s) s.setAttribute('material', 'opacity', cutaway ? 0.1 : 0.95);
@@ -956,7 +1343,6 @@
                 $('#btnCut').textContent = cutaway ? 'เปิดฝาดูภายใน' : 'ปิดฝาเครื่อง';
                 applyCutaway();
             };
-
             function applyExplode() {
                 document.querySelectorAll('[data-explode]').forEach(el => {
                     if (!el.dataset.base) {
@@ -969,45 +1355,167 @@
                     el.setAttribute('animation__ex', { property: 'position', to, dur: 650, easing: 'easeOutCubic' });
                 });
             }
-            $('#btnExp').onclick = () => { exploded = !exploded; $('#btnExp').classList.toggle('on', exploded); applyExplode(); };
+            $('#btnExp').onclick = () => {
+                exploded = !exploded;
+                $('#btnExp').classList.toggle('on', exploded);
+                applyExplode(); buzz(15);
+            };
 
-            function applyFreq() {
-                const f = VFD.freq;
-                $('#freqval').textContent = f.toFixed(2) + ' Hz';
-                const kp = $('#kpDisplay');
-                if (kp) kp.setAttribute('th-label', 'text', f.toFixed(2));
-                const ml = $('#motorLabel');
-                if (ml) ml.setAttribute('th-label', 'text',
-                    `มอเตอร์เหนี่ยวนำ 3 เฟส 4 ขั้ว|${Math.round(120 * f / VFD.poles)} rpm`);
+            /* ---------- แตะชิ้นส่วนเพื่อดูรายละเอียด ---------- */
+            const detail = $('#detail');
+            function showDetail(key) {
+                const p = PARTS[key];
+                if (!p) return;
+                $('#detailTitle').textContent = p.n;
+                $('#detailBody').textContent = p.d;
+                detail.classList.add('show');
+                setAutoplay(false);
+                if (typeof p.s === 'number') { step = p.s; applyStep(); }
+                highlight([key], '#4cc9f0');
+                buzz(20);
             }
-            $('#freq').addEventListener('input', e => { VFD.freq = +e.target.value; applyFreq(); });
+            $('#detailClose').onclick = () => { detail.classList.remove('show'); applyStep(); };
 
-            function applySize(v) {
-                const m = $('#modelRoot');
-                if (m) m.setAttribute('scale', `${v} ${v} ${v}`);
-                $('#sizeval').textContent = (+v).toFixed(2) + '×';
+            document.querySelector('a-scene').addEventListener('click', evt => {
+                const el = evt.target;
+                if (!el || !el.closest) return;
+                const act = el.closest('[data-act]');
+                if (act) {
+                    setRunning(act.dataset.act === 'run');
+                    if (act.dataset.act === 'run' && VFD.fault) clearFault();
+                    return;
+                }
+                const part = el.closest('[data-part]');
+                if (part) showDetail(part.dataset.part);
+            });
+
+            /* ---------- เสียงมอเตอร์จำลอง ---------- */
+            let audio = null;
+            function initAudio() {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (!AC) return null;
+                const ctx = new AC();
+                const gain = ctx.createGain(); gain.gain.value = 0; gain.connect(ctx.destination);
+                const hum = ctx.createOscillator(); hum.type = 'sawtooth'; hum.frequency.value = 100;
+                const whine = ctx.createOscillator(); whine.type = 'triangle'; whine.frequency.value = 1400;
+                const wGain = ctx.createGain(); wGain.gain.value = 0.35;
+                hum.connect(gain); whine.connect(wGain); wGain.connect(gain);
+                hum.start(); whine.start();
+                return { ctx, gain, hum, whine };
             }
-            $('#size').addEventListener('input', e => applySize(+e.target.value));
+            $('#btnSound').onclick = () => {
+                if (!audio) audio = initAudio();
+                if (!audio) return;
+                if (audio.ctx.state === 'suspended') audio.ctx.resume();
+                audio.on = !audio.on;
+                $('#btnSound').classList.toggle('on', !!audio.on);
+            };
 
+            /* ---------- ลากหมุนและย่อขยายในโหมดไม่ใช้ marker ---------- */
+            (function gestures() {
+                let dragging = false, lastX = 0, pinch0 = 0, scale0 = 0.6;
+                const canvasOK = e => mounted === 'preview' && e.target && e.target.tagName === 'CANVAS';
+                const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+
+                document.addEventListener('touchstart', e => {
+                    if (!canvasOK(e)) return;
+                    if (e.touches.length === 1) { dragging = true; lastX = e.touches[0].clientX; }
+                    if (e.touches.length === 2) { pinch0 = dist(e.touches); scale0 = userScale || 0.6; }
+                }, { passive: true });
+
+                document.addEventListener('touchmove', e => {
+                    if (!canvasOK(e)) return;
+                    const m = $('#modelRoot');
+                    if (!m) return;
+                    if (e.touches.length === 1 && dragging) {
+                        userYaw += (e.touches[0].clientX - lastX) * 0.5;
+                        lastX = e.touches[0].clientX;
+                        m.setAttribute('rotation', `0 ${userYaw} 0`);
+                    } else if (e.touches.length === 2 && pinch0) {
+                        const v = Math.max(0.25, Math.min(1.4, scale0 * dist(e.touches) / pinch0));
+                        applySize(v);
+                        $('#size').value = v;
+                    }
+                }, { passive: true });
+
+                document.addEventListener('touchend', () => { dragging = false; pinch0 = 0; }, { passive: true });
+            })();
+
+            /* ---------- โหมดไม่ใช้ marker ---------- */
             $('#btnPreview').onclick = () => {
                 const to = mounted === 'marker' ? 'preview' : 'marker';
                 mount(to);
                 $('#btnPreview').textContent = to === 'preview' ? 'กลับไปใช้ marker' : 'โหมดไม่ใช้ marker';
                 setStatus(to === 'preview' ? 'preview' : 'searching');
             };
-
             function setStatus(mode) {
                 $('#status').classList.toggle('found', mode === 'found' || mode === 'preview');
                 $('#statustext').textContent = mode === 'found' ? 'พบ marker แล้ว'
                     : mode === 'preview' ? 'โหมดไม่ใช้ marker' : 'ค้นหา marker';
             }
-
             const marker = $('#markerRoot');
-            marker.addEventListener('markerFound', () => { if (mounted === 'marker') setStatus('found'); });
+            marker.addEventListener('markerFound', () => { if (mounted === 'marker') { setStatus('found'); buzz(25); } });
             marker.addEventListener('markerLost', () => { if (mounted === 'marker') setStatus('searching'); });
 
-            /* เริ่มทำงาน: ไม่พึ่งอีเวนต์เดียว เพราะ AR.js อาจโหลดไฟล์ภายนอกช้าจน a-scene
-               ไม่ยิง loaded ทำให้หน้าโหลดค้างทั้งที่กล้องทำงานอยู่แล้ว */
+            /* =======================================================================
+               ลูปจำลองการทำงานของไดรฟ์: ไต่ความถี่ตามเวลาเร่ง สะสมความร้อน อัปเดตจอ
+               ======================================================================= */
+            let last = performance.now();
+            function loop(now) {
+                const dt = Math.min(0.1, (now - last) / 1000);
+                last = now;
+
+                const rate = 50 / Math.max(0.5, VFD.ramp);          // Hz ต่อวินาที
+                if (VFD.fault) {
+                    VFD.freq = Math.max(0, VFD.freq - rate * 1.6 * dt); // ตัดเอาต์พุต ปล่อยให้มอเตอร์หมุนฟรี
+                } else if (VFD.running) {
+                    const d = VFD.target - VFD.freq;
+                    VFD.freq += Math.sign(d) * Math.min(Math.abs(d), rate * dt);
+                } else {
+                    VFD.freq = Math.max(0, VFD.freq - rate * dt);
+                }
+
+                // ความร้อนสะสม: ขึ้นตามโหลด ลงเมื่อพัดลมระบายทัน
+                const load = VFD.freq / 50;
+                if (VFD.fault !== 'oH') {
+                    VFD.heat += (load * 0.85 - VFD.heat) * dt * 0.25;
+                    VFD.heat = Math.max(0, Math.min(1, VFD.heat));
+                }
+
+                // จอมิเตอร์
+                const rpm = Math.round(120 * VFD.freq / VFD.poles);
+                $('#mFreq').textContent = VFD.fault ? FAULTS[VFD.fault].code : VFD.freq.toFixed(2);
+                $('#mRpm').textContent = rpm;
+                $('#mState').textContent = VFD.fault ? 'FAULT' : VFD.running ? (Math.abs(VFD.target - VFD.freq) > 0.2 ? 'ACC' : 'RUN') : 'STOP';
+                $('#heatfill').style.width = (VFD.heat * 100).toFixed(0) + '%';
+
+                // จอบนตัวเครื่องและป้ายมอเตอร์
+                const kp = document.getElementById('kpDisplay');
+                if (kp) {
+                    const txt = VFD.fault
+                        ? (Math.floor(now / 450) % 2 ? FAULTS[VFD.fault].code : '')
+                        : VFD.freq.toFixed(2);
+                    if (kp.dataset.last !== txt) { kp.dataset.last = txt; kp.setAttribute('th-label', 'text', txt || ' '); }
+                }
+                const ml = document.getElementById('motorLabel');
+                if (ml && ml.dataset.rpm !== String(rpm) && now % 3 < 1) {
+                    ml.dataset.rpm = String(rpm);
+                    ml.setAttribute('th-label', 'text', `มอเตอร์เหนี่ยวนำ 3 เฟส 4 ขั้ว|${rpm} rpm`);
+                }
+
+                // เสียง
+                if (audio) {
+                    const g = audio.on && VFD.freq > 0.3 ? 0.035 : 0;
+                    audio.gain.gain.setTargetAtTime(g, audio.ctx.currentTime, 0.08);
+                    audio.hum.frequency.setTargetAtTime(24 + VFD.freq * 2.4, audio.ctx.currentTime, 0.08);
+                    audio.whine.frequency.setTargetAtTime(700 + VFD.freq * 26, audio.ctx.currentTime, 0.08);
+                }
+
+                requestAnimationFrame(loop);
+            }
+            requestAnimationFrame(loop);
+
+            /* ---------- เริ่มทำงาน (ไม่พึ่งอีเวนต์เดียว กันหน้าโหลดค้าง) ---------- */
             const scene = document.querySelector('a-scene');
             let started = false;
             function start() {
@@ -1020,9 +1528,9 @@
             if (scene.hasLoaded) start();
             scene.addEventListener('loaded', start);
             scene.addEventListener('renderstart', start);
-            setTimeout(start, 2500);        // ตาข่ายกันค้าง
+            setTimeout(start, 2500);
 
-            /* บนมือถือเปิด console ไม่ได้ จึงแสดง error บนหน้าจอแทน */
+            /* ---------- แสดง error บนจอ เพราะมือถือเปิด console ไม่ได้ ---------- */
             function showErr(msg) {
                 const b = $('#errbar');
                 b.style.display = 'block';
@@ -1033,7 +1541,6 @@
                 else showErr(e.message + ' @' + (e.filename || '').split('/').pop() + ':' + e.lineno);
             }, true);
             window.addEventListener('unhandledrejection', e => showErr('Promise: ' + (e.reason && e.reason.message || e.reason)));
-
             window.addEventListener('camera-error', () => showErr('เปิดกล้องไม่สำเร็จ ตรวจสิทธิ์กล้องของเว็บไซต์นี้'));
         })();
     </script>
