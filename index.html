@@ -40,16 +40,35 @@
             margin: 0;
             height: 100%;
             overflow: hidden;
-            background: #000;
+            background: transparent;
             font-family: "IBM Plex Sans Thai", sans-serif;
             color: var(--text);
             -webkit-font-smoothing: antialiased;
+        }
+
+        /* ให้ภาพจากกล้องแสดงเต็มจอและอยู่หลังฉาก 3 มิติ */
+        video#arjs-video,
+        .a-canvas~video,
+        video.arjs-video {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            z-index: -1 !important;
+            display: block !important;
         }
 
         a-scene {
             position: fixed;
             inset: 0;
             z-index: 0;
+            background: transparent;
+        }
+
+        .a-canvas {
+            background: transparent !important;
         }
 
         .arjs-loader {
@@ -726,10 +745,11 @@
                     <button id="btnStop" class="stop">■ หยุด</button>
                 </div>
 
-                <div class="btn-grid">
+                <div class="btn-grid cols-2">
                     <button id="btnCut" class="on">เปิดฝาดู</button>
                     <button id="btnExp">แยกชิ้นส่วน</button>
                     <button id="btnFlow" class="on">ทางเดินไฟ</button>
+                    <button id="btnFace" class="on">หันเข้ากล้อง</button>
                 </div>
 
                 <button id="btnMore"
@@ -806,32 +826,49 @@
         AFRAME.registerComponent('scope', { schema: { mode: { default: 'ac' }, w: { default: 0.56 } }, init() { this.c = document.createElement('canvas'); this.c.width = 512; this.c.height = 256; this.ctx = this.c.getContext('2d'); this.tex = new THREE.CanvasTexture(this.c); this.tex.minFilter = THREE.LinearFilter; this.el.setObject3D('mesh', new THREE.Mesh(new THREE.PlaneGeometry(this.data.w, this.data.w * 0.5), new THREE.MeshBasicMaterial({ map: this.tex, transparent: true }))); this.tick = AFRAME.utils.throttleTick(this.tick, 40, this); }, tick(t) { const ctx = this.ctx, W = 512, H = 256, mid = H / 2, A = 82, ph = t / 340; ctx.clearRect(0, 0, W, H); ctx.fillStyle = 'rgba(6,12,17,0.9)'; ctx.fillRect(0, 0, W, H); ctx.strokeStyle = 'rgba(140,180,200,0.16)'; ctx.lineWidth = 1; for (let x = 0; x <= W; x += 64) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); } for (let y = 0; y <= H; y += 42) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); } const draw = (fn, color, lw) => { ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = lw || 3; for (let x = 0; x <= W; x++) { const y = fn(x / W); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); }; if (this.data.mode === 'ac') { [['#38bdf8', 0], ['#4ade80', 2.094], ['#c9a6ff', 4.188]].forEach(([col, off]) => draw(u => mid - A * Math.sin(u * Math.PI * 4 + ph + off), col, 2.5)); } else if (this.data.mode === 'dc') { const lv = VFD.fault === 'oU' ? 1.12 : VFD.fault === 'LU' ? 0.55 : 0.9; draw(u => mid - A * (lv + 0.055 * Math.abs(Math.sin(u * Math.PI * 12 + ph))), VFD.fault === 'oU' || VFD.fault === 'LU' ? '#ef4444' : '#f97316', 3); ctx.setLineDash([7, 7]); draw(() => mid - A * 0.93, 'rgba(250,204,21,0.75)', 2); ctx.setLineDash([]); } else { const f = Math.max(0.001, VFD.freq / 50); const env = u => Math.sin(u * Math.PI * 4 * f + ph * f); if (VFD.freq < 0.2) { draw(() => mid, 'rgba(250,204,21,0.5)', 2); } else { ctx.beginPath(); ctx.strokeStyle = '#facc15'; ctx.lineWidth = 1.6; let prev = mid; for (let x = 0; x <= W; x++) { const u = x / W; const y = mid - A * (Math.sin(u * Math.PI * 120) < env(u) ? 1 : -1) * 0.98; ctx.moveTo(x, prev); ctx.lineTo(x, y); prev = y; } ctx.stroke(); draw(u => mid - A * 0.72 * env(u), '#38bdf8', 3); } } this.tex.needsUpdate = true; } });
         AFRAME.registerComponent('spin', { schema: { rate: { default: 200 }, fromFreq: { default: false } }, tick(time, dt) { if (!dt) return; const r = this.data.fromFreq ? (VFD.freq / 50) * this.data.rate : this.data.rate; this.el.object3D.rotation.y += (r * dt) / 1000 * Math.PI / 180; } });
 
+        /* หมุนโมเดลรอบแกนตั้งให้ด้านหน้าเครื่องหันเข้าหากล้องเสมอ
+           แก้ปัญหาส่องจากมุมข้างแล้วเห็นตัวเครื่องเป็นแผ่นบาง */
+        AFRAME.registerComponent('face-cam', {
+            schema: { enabled: { default: true } },
+            init() { this._c = new THREE.Vector3(); this._p = new THREE.Vector3(); },
+            tick() {
+                if (!this.data.enabled) return;
+                const cam = this.el.sceneEl.camera;
+                const o = this.el.object3D;
+                if (!cam || !o.parent) return;
+                cam.getWorldPosition(this._c);
+                o.parent.worldToLocal(this._c);          // แปลงเป็นพิกัดของ marker
+                const dx = this._c.x - o.position.x, dz = this._c.z - o.position.z;
+                o.rotation.set(0, Math.atan2(dx, dz), 0);
+            }
+        });
+
         /* ---------------- โมเดล 3 มิติ ---------------- */
         function buildModel() {
             const M = (c, o) => `material="color:${c}; metalness:0.2; roughness:0.6${o !== undefined ? '; opacity:' + o + '; transparent:true' : ''}"`;
             const CREAM = '#e4e0d2', CREAM_D = '#cdc8b8', GREEN = '#1f7a4d', DARK = '#2f3438';
 
             return `
-<a-entity id="modelRoot" scale="0.6 0.6 0.6">
-  <a-torus position="-0.1 0.012 0" rotation="-90 0 0" radius="1.5" radius-tubular="0.006" material="color:#38bdf8; opacity:0.35; transparent:true" animation="property: rotation; to: -90 360 0; dur: 24000; loop: true; easing: linear"></a-torus>
+<a-entity id="modelRoot" scale="0.7 0.7 0.7" face-cam="enabled: true">
+  <a-torus position="0 0.012 0.3" rotation="-90 0 0" radius="1.05" radius-tubular="0.006" material="color:#38bdf8; opacity:0.35; transparent:true" animation="property: rotation; to: -90 360 0; dur: 24000; loop: true; easing: linear"></a-torus>
 
-  <a-entity position="-0.30 2.2 0" billboard th-label="text: VEICHI AC10 Series; width:0.8; size:26; accent:#eab308; bg:rgba(10,16,22,0.7)"></a-entity>
-  <a-entity id="specPlate" position="1.6 1.15 0" billboard th-label="text: 1 Phase 220V / 3 Phase 380V|V/F & Vector Control|Output 0-599 Hz; width:0.75; size:20; accent:#10b981; bg:rgba(10,16,22,0.7)"></a-entity>
+  <a-entity position="0 2.36 0" th-label="text: VEICHI AC10 Series; width:0.8; size:26; accent:#eab308; bg:rgba(10,16,22,0.75); align:center"></a-entity>
 
-  <a-entity position="-1.35 1.72 0" billboard>
-    <a-entity scope="mode: ac"></a-entity>
-    <a-entity position="0 -0.22 0" th-label="text: R S T (AC IN); width:0.4; size:24; accent:#38bdf8; bg:rgba(10,16,22,0.7); align:center"></a-entity>
+  <!-- จอรูปคลื่นสามจุดวัด เรียงเป็นแถวเหนือตัวเครื่อง -->
+  <a-entity position="-0.60 1.98 0">
+    <a-entity scope="mode: ac; w: 0.52"></a-entity>
+    <a-entity position="0 -0.20 0" th-label="text: R S T; width:0.3; size:24; accent:#38bdf8; bg:rgba(10,16,22,0.75); align:center"></a-entity>
   </a-entity>
-  <a-entity position="-0.72 1.72 0" billboard>
-    <a-entity scope="mode: dc"></a-entity>
-    <a-entity position="0 -0.22 0" th-label="text: DC Bus; width:0.35; size:24; accent:#f97316; bg:rgba(10,16,22,0.7); align:center"></a-entity>
+  <a-entity position="0 1.98 0">
+    <a-entity scope="mode: dc; w: 0.52"></a-entity>
+    <a-entity position="0 -0.20 0" th-label="text: DC Bus; width:0.3; size:24; accent:#f97316; bg:rgba(10,16,22,0.75); align:center"></a-entity>
   </a-entity>
-  <a-entity position="-0.09 1.72 0" billboard>
-    <a-entity scope="mode: pwm"></a-entity>
-    <a-entity position="0 -0.22 0" th-label="text: U V W (PWM); width:0.4; size:24; accent:#eab308; bg:rgba(10,16,22,0.7); align:center"></a-entity>
+  <a-entity position="0.60 1.98 0">
+    <a-entity scope="mode: pwm; w: 0.52"></a-entity>
+    <a-entity position="0 -0.20 0" th-label="text: U V W; width:0.3; size:24; accent:#eab308; bg:rgba(10,16,22,0.75); align:center"></a-entity>
   </a-entity>
 
-  <a-entity id="drive" position="-0.72 0 0">
+  <a-entity id="drive" position="0 0 0">
     <a-box id="shellFront" position="0 0.75 0.335" width="0.66" height="1.50" depth="0.015" ${M(CREAM, 0.12)}></a-box>
     <a-box position="0 0.75 -0.335" width="0.66" height="1.50" depth="0.015" ${M(CREAM_D)}></a-box>
     <a-box position="-0.335 0.75 0" width="0.015" height="1.50" depth="0.66" ${M(CREAM_D)}></a-box>
@@ -919,7 +956,7 @@
     <a-entity id="flowAirOut" energy-flow="tracks: air; shape: arrow; line: false; color:#7dd3fc; count:4; speed:0.42; size:0.026; path: 0.10 0.72 -0.22, -0.23 0.72 -0.10, -0.60 0.80 -0.05"></a-entity>
   </a-entity>
 
-  <a-entity id="motorGroup" position="0.95 0.38 0" data-part="motor" glow="color:#eab308">
+  <a-entity id="motorGroup" position="0 0.38 1.15" rotation="0 90 0" data-part="motor" glow="color:#eab308">
     <a-cylinder rotation="0 0 90" radius="0.28" height="0.56" ${M('#1e293b')}></a-cylinder>
     <a-cylinder position="-0.30 0 0" rotation="0 0 90" radius="0.29" height="0.05" ${M('#0f172a')}></a-cylinder>
     <a-cylinder position="0.30 0 0"  rotation="0 0 90" radius="0.29" height="0.05" ${M('#0f172a')}></a-cylinder>
@@ -929,9 +966,7 @@
     <a-entity id="motorLabel" position="0 -0.56 0" billboard th-label="text: มอเตอร์เหนี่ยวนำ 4 ขั้ว|0 rpm; width:0.5; size:24; accent:#eab308; bg:rgba(10,16,22,0.7); align:center"></a-entity>
   </a-entity>
 
-  <a-entity id="flowPWM" energy-flow="tracks: pwm; color:#eab308; count:7; speed:0.7; path: -0.62 0.60 0.05, -0.57 0.14 0.26, -0.25 0.06 0.20, 0.35 0.24 0.08, 0.72 0.38 0.02"></a-entity>
-
-  <a-entity id="stepPlate" position="0 0.01 1.2" rotation="-90 0 0" th-label="text: กำลังเริ่มต้น; width:1.5; size:26; accent:#eab308; bg:rgba(10,16,22,0.6)"></a-entity>
+  <a-entity id="flowPWM" energy-flow="tracks: pwm; color:#eab308; count:7; speed:0.7; path: 0.10 0.45 -0.02, 0.15 0.14 0.30, 0.14 0.08 0.58, 0.03 0.30 0.85"></a-entity>
 </a-entity>`;
         }
 
@@ -947,6 +982,19 @@
 
             const buzz = ms => { if (navigator.vibrate) navigator.vibrate(ms); };
 
+            let faceCam = true;
+            function applyFaceCam() {
+                const m = $('#modelRoot');
+                if (!m) return;
+                m.setAttribute('face-cam', 'enabled', faceCam);
+                if (!faceCam) m.setAttribute('rotation', `0 ${userYaw} 0`);
+            }
+            $('#btnFace').onclick = () => {
+                faceCam = !faceCam;
+                $('#btnFace').classList.toggle('on', faceCam);
+                applyFaceCam(); buzz(12);
+            };
+
             function mount(where) {
                 const marker = $('#markerRoot'), preview = $('#previewRoot');
                 marker.innerHTML = ''; preview.innerHTML = '';
@@ -954,9 +1002,10 @@
                 mounted = where; userYaw = 0;
                 setTimeout(() => {
                     const m = $('#modelRoot');
-                    if (m && where === 'preview') m.setAttribute('position', '-0.15 -0.7 0');
-                    const auto = where === 'preview' ? (window.innerHeight < 800 ? 0.42 : 0.5) : 0.6;
-                    $('#size').value = auto; applyStep(); applySize(auto); applyCutaway(); applyExplode();
+                    if (m && where === 'preview') m.setAttribute('position', '-0.05 -0.85 0');
+                    const auto = where === 'preview' ? (window.innerHeight < 800 ? 0.5 : 0.6) : 0.7;
+                    $('#size').value = auto;
+                    applyStep(); applySize(auto); applyCutaway(); applyExplode(); applyFaceCam();
                 }, 130);
             }
 
@@ -1058,7 +1107,7 @@
                 const canvasOK = e => mounted === 'preview' && e.target && e.target.tagName === 'CANVAS';
                 const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
                 document.addEventListener('touchstart', e => { if (!canvasOK(e)) return; if (e.touches.length === 1) { dragging = true; lastX = e.touches[0].clientX; } if (e.touches.length === 2) { pinch0 = dist(e.touches); scale0 = userScale || 0.6; } }, { passive: true });
-                document.addEventListener('touchmove', e => { if (!canvasOK(e)) return; const m = $('#modelRoot'); if (!m) return; if (e.touches.length === 1 && dragging) { userYaw += (e.touches[0].clientX - lastX) * 0.5; lastX = e.touches[0].clientX; m.setAttribute('rotation', `0 ${userYaw} 0`); } else if (e.touches.length === 2 && pinch0) { const v = Math.max(0.25, Math.min(1.4, scale0 * dist(e.touches) / pinch0)); applySize(v); $('#size').value = v; } }, { passive: true });
+                document.addEventListener('touchmove', e => { if (!canvasOK(e)) return; const m = $('#modelRoot'); if (!m) return; if (e.touches.length === 1 && dragging) { if (faceCam) { faceCam = false; $('#btnFace').classList.remove('on'); m.setAttribute('face-cam', 'enabled', false); } userYaw += (e.touches[0].clientX - lastX) * 0.5; lastX = e.touches[0].clientX; m.setAttribute('rotation', `0 ${userYaw} 0`); } else if (e.touches.length === 2 && pinch0) { const v = Math.max(0.25, Math.min(1.4, scale0 * dist(e.touches) / pinch0)); applySize(v); $('#size').value = v; } }, { passive: true });
                 document.addEventListener('touchend', () => { dragging = false; pinch0 = 0; }, { passive: true });
             })();
 
