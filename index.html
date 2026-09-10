@@ -4,57 +4,40 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <title>AR: การกำเนิดของระบบสุริยะ (Premium UI + 3D Rotate)</title>
+    <title>AR • VEICHI AC10 Series Variable Frequency Drive</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@600&display=swap" rel="stylesheet">
 
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
 
     <style>
          :root {
-            --void: #04060e;
-            --ink: #ffffff;
-            --dim: rgba(237, 241, 250, .7);
-            --hair: rgba(155, 215, 255, .15);
-            --amber: #ffaa00;
-            --amber-dim: rgba(255, 170, 0, 0.2);
-            --ice: #9bd7ff;
-            --warn: #ff6b6b;
-            --glass: rgba(12, 18, 38, 0.65);
+            --panel: rgba(10, 16, 22, .82);
+            --line: rgba(140, 170, 190, .22);
+            --text: #e8f0f4;
+            --muted: #9fb3bf;
+            --ac: #4cc9f0;
+            --dc: #ff6b3d;
+            --pwm: #ffc94a;
+            --air: #7ec8f5;
+            --ok: #57d98a;
         }
         
         * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent
+            box-sizing: border-box
         }
-        /* ป้องกันการเลื่อน/ซูมหน้าจอเมื่อเรากำลังปัดเพื่อหมุนดาว */
         
         html,
-        body {
-            touch-action: none;
-        }
-        
-        html {
-            background: var(--void);
-            height: 100%
-        }
-        
         body {
             margin: 0;
             height: 100%;
             overflow: hidden;
-            background: transparent;
-            color: var(--ink);
-            font-family: "Noto Sans Thai", system-ui, sans-serif;
-            font-variant-numeric: tabular-nums;
-            letter-spacing: 0.02em;
-        }
-        
-        html.nocam {
-            background: radial-gradient(120% 90% at 50% 20%, #0a1128 0%, #04060e 72%)
+            background: #000;
+            font-family: "IBM Plex Sans Thai", "Noto Sans Thai", Tahoma, sans-serif;
+            color: var(--text)
         }
         
         a-scene {
@@ -62,1986 +45,1488 @@
             inset: 0
         }
         
-        .a-canvas {
-            background: transparent !important
+        .arjs-loader {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #05090d;
+            z-index: 50;
+            color: var(--muted);
+            font-size: 14px;
+            text-align: center;
+            padding: 24px
         }
-        
-        .a-enter-vr,
-        .a-enter-ar,
-        .a-orientation-modal {
-            display: none !important
-        }
-        /* ---------- โครง HUD ---------- */
         
         #hud {
             position: fixed;
-            inset: 0;
-            z-index: 50;
+            left: 0;
+            right: 0;
+            top: 0;
+            z-index: 20;
+            padding: 10px 12px calc(10px + env(safe-area-inset-top, 0px));
             pointer-events: none;
             display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            transition: opacity .3s
-        }
-        
-        html.bare #hud {
-            opacity: .05
-        }
-        
-        html.bare #hud * {
-            pointer-events: none
-        }
-        
-        #top {
-            pointer-events: auto;
-            padding: calc(env(safe-area-inset-top) + 20px) 20px 30px;
-            background: linear-gradient(180deg, rgba(4, 6, 14, 0.95) 0%, rgba(4, 6, 14, 0.6) 60%, transparent 100%)
-        }
-        /* ปล่อยให้การปัดผ่าน bottom ทะลุไปที่กล้อง เพื่อหมุนดาวได้ง่ายขึ้น */
-        
-        #bottom {
-            pointer-events: none;
-            padding: 30px 20px calc(env(safe-area-inset-bottom) + 20px);
-            background: linear-gradient(0deg, rgba(4, 6, 14, 0.95) 0%, rgba(4, 6, 14, 0.5) 75%, transparent 100%)
-        }
-        
-        #bottom .col {
-            pointer-events: auto;
-        }
-        /* แต่ตัวการ์ดข้อมูลยังกดได้ปกติ */
-        
-        .col {
-            max-width: 560px;
-            margin: 0 auto;
-            width: 100%
-        }
-        /* ---------- แท็บสลับโหมด (Modern Pill Tabs) ---------- */
-        
-        #tabs {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 20px;
-            padding: 4px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--hair);
-            width: max-content;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-        
-        button.tab {
-            all: unset;
-            cursor: pointer;
-            padding: 8px 20px;
-            border-radius: 999px;
-            font-size: 13px;
-            color: var(--dim);
-            transition: all 0.3s ease;
-        }
-        
-        button.tab[aria-selected="true"] {
-            background: var(--amber);
-            color: #000;
-            font-weight: 700;
-            box-shadow: 0 2px 10px rgba(255, 170, 0, 0.4);
-        }
-        /* ---------- หัวเรื่อง ---------- */
-        
-        #head-row {
-            display: flex;
+            gap: 10px;
             align-items: flex-start;
-            gap: 14px
+            justify-content: space-between
         }
         
-        #titles {
-            flex: 1;
-            min-width: 0
+        .badge {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 8px 12px;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px)
         }
         
-        #stage-title {
+        .badge h1 {
             margin: 0;
-            font-size: 22px;
-            font-weight: 700;
-            line-height: 1.2;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
-        }
-        
-        #stage-desc {
-            margin: 6px 0 0;
             font-size: 14px;
-            line-height: 1.5;
-            color: var(--dim);
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden
+            font-weight: 600
         }
         
-        #tools {
-            display: flex;
-            gap: 10px;
-            flex: none;
-            padding-top: 2px
+        .badge p {
+            margin: 2px 0 0;
+            font-size: 11px;
+            color: var(--muted)
         }
         
-        .tool {
-            all: unset;
-            cursor: pointer;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(5px);
-            border: 1px solid var(--hair);
-            color: var(--ink);
+        #status {
             display: flex;
             align-items: center;
-            justify-content: center;
-            transition: 0.2s;
-        }
-        
-        .tool:active {
-            background: rgba(255, 255, 255, 0.15);
-            transform: scale(0.95);
-        }
-        /* ---------- แถบเวลา: สเกลเครื่องมือวัด ---------- */
-        
-        #scale {
-            position: relative;
-            height: 26px;
-            margin-top: 20px
-        }
-        
-        #rail {
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 16px;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px
-        }
-        
-        #fill {
-            position: absolute;
-            left: 0;
-            top: 16px;
-            height: 2px;
-            width: 0;
-            border-radius: 2px;
-            background: linear-gradient(90deg, var(--ice), var(--amber));
-            box-shadow: 0 0 8px var(--amber);
-        }
-        
-        #head {
-            position: absolute;
-            top: 12px;
-            left: 0;
-            width: 10px;
-            height: 10px;
-            margin-left: -5px;
-            border-radius: 50%;
-            background: var(--amber);
-            box-shadow: 0 0 12px 3px rgba(255, 170, 0, 0.6)
-        }
-        
-        .notch {
-            position: absolute;
-            top: 16px;
-            width: 2px;
-            background: rgba(255, 255, 255, 0.2);
-            height: 6px;
-            margin-left: -1px;
-            transition: height .3s, background .3s
-        }
-        
-        .notch.done {
-            background: var(--amber-dim)
-        }
-        
-        .notch.now {
-            height: 12px;
-            top: 10px;
-            background: var(--amber);
-            box-shadow: 0 0 5px var(--amber);
-        }
-        
-        #count {
-            position: absolute;
-            right: 0;
-            top: -5px;
+            gap: 7px;
             font-size: 12px;
-            color: var(--amber);
-            font-weight: 600;
+            font-weight: 500
         }
         
-        #stage-title,
-        #stage-desc {
-            transition: opacity .28s
-        }
-        
-        html.flip #stage-title,
-        html.flip #stage-desc {
-            opacity: 0
-        }
-        /* ---------- กลางจอ ---------- */
-        
-        #mid {
-            align-self: center;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            align-items: center;
-            padding: 0 20px;
-            max-width: 520px;
-            pointer-events: none;
-        }
-        
-        #hint {
-            pointer-events: auto;
-            font-size: 14px;
-            color: var(--ink);
-            background: var(--glass);
-            -webkit-backdrop-filter: blur(16px);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 999px;
-            padding: 10px 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: opacity .25s;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        }
-        
-        #hint.gone {
-            opacity: 0;
-            pointer-events: none
-        }
-        
-        #hint .dot {
+        #dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: var(--amber);
-            flex: none;
-            animation: beat 2s infinite
+            background: var(--dc);
+            box-shadow: 0 0 8px currentColor;
+            transition: background .2s
         }
         
-        @keyframes beat {
-            0% {
-                box-shadow: 0 0 0 0 rgba(255, 170, 0, 0.6)
-            }
-            70% {
-                box-shadow: 0 0 0 12px rgba(255, 170, 0, 0)
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(255, 170, 0, 0)
-            }
+        #status.found #dot {
+            background: var(--ok)
         }
         
-        .link {
-            all: unset;
-            cursor: pointer;
-            color: var(--ice);
-            border-bottom: 1px solid rgba(155, 215, 255, .5);
-            font: inherit
-        }
-        /* ---------- การ์ดข้อมูลดาว (Sci-Fi Data Card) ---------- */
-        
-        #card {
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-            transition: opacity .2s, transform .2s;
+        #dock {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 20;
+            padding: 10px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+            pointer-events: none
         }
         
-        html.swap #card {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        
-        #card-top {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-            border-bottom: 1px solid var(--hair);
-            padding-bottom: 12px;
-        }
-        
-        #body-name {
-            margin: 0;
-            font-size: 26px;
-            font-weight: 700;
-            color: var(--amber);
-            text-shadow: 0 2px 10px rgba(255, 170, 0, 0.3);
-        }
-        
-        #body-en {
-            font-size: 14px;
-            color: var(--dim);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        #body-kind {
-            font-size: 11px;
-            color: #fff;
-            background: rgba(255, 170, 0, 0.2);
-            border: 1px solid var(--amber);
-            border-radius: 4px;
-            padding: 3px 8px;
-            font-weight: 600;
-        }
-        
-        #body-about {
-            margin: 15px 0 0;
-            font-size: 14px;
-            line-height: 1.6;
-            color: var(--dim);
-        }
-        
-        #body-facts {
-            margin: 15px 0 0;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        
-        #body-facts div {
-            background: rgba(255, 255, 255, 0.03);
-            padding: 10px 12px;
-            border-radius: 8px;
-            border-left: 2px solid var(--ice);
-        }
-        
-        #body-facts dt {
-            font-size: 11px;
-            color: var(--dim);
-            text-transform: uppercase;
-        }
-        
-        #body-facts dd {
-            margin: 4px 0 0;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--ink);
-        }
-        
-        #body-note {
-            margin: 15px 0 0;
-            font-size: 13px;
-            color: var(--amber);
-            text-align: center;
-            font-weight: 500;
-            background: rgba(255, 170, 0, 0.1);
-            padding: 8px;
-            border-radius: 8px;
-        }
-        /* ---------- แถบเลื่อนเลือกดาว (Pill Selector) ---------- */
-        
-        #picker {
-            display: flex;
-            gap: 12px;
-            margin: 0 -20px 20px;
-            padding: 5px 20px 15px;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none
-        }
-        
-        #picker::-webkit-scrollbar {
-            display: none
-        }
-        
-        #picker .pad {
-            flex: none;
-            width: calc(50vw - 80px)
-        }
-        
-        button.pk {
-            all: unset;
-            cursor: pointer;
-            flex: none;
-            scroll-snap-align: center;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 18px;
-            border-radius: 999px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 14px;
-            color: var(--dim);
-            white-space: nowrap;
-            transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        button.pk .orb {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: var(--c);
-            flex: none;
-            box-shadow: inset -2px -2px 4px rgba(0, 0, 0, 0.5), 0 0 10px var(--c);
-        }
-        
-        button.pk[aria-current="true"] {
-            color: #000;
-            font-weight: 700;
-            transform: scale(1.05);
-            border-color: var(--amber);
-            background: var(--amber);
-            box-shadow: 0 5px 15px rgba(255, 170, 0, 0.3);
-        }
-        
-        button.pk[aria-current="true"] .orb {
-            box-shadow: inset -2px -2px 4px rgba(0, 0, 0, 0.5), 0 0 0 2px #fff;
-        }
-        /* ---------- ปุ่มควบคุม และ ความเร็ว ---------- */
-        
-        #deck {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 35px;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 15px;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--hair);
-        }
-        
-        button.act {
-            all: unset;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            color: var(--dim);
-            font-size: 12px;
-            min-width: 52px;
-            white-space: nowrap;
-            transition: 0.2s;
-        }
-        
-        button.act .ring {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all .2s
-        }
-        
-        button.act:active {
-            transform: scale(0.95);
-        }
-        
-        button.act:active .ring {
-            background: rgba(255, 255, 255, 0.15)
-        }
-        
-        #btn-play {
-            color: var(--amber)
-        }
-        
-        #btn-play .ring {
-            width: 64px;
-            height: 64px;
-            border-color: var(--amber);
-            background: var(--amber-dim);
-            box-shadow: 0 0 25px rgba(255, 170, 0, .2)
-        }
-        
-        #btn-play:active .ring {
-            background: rgba(255, 170, 0, .4)
-        }
-        
-        #speeds {
-            position: relative;
-            display: flex;
-            margin: 20px auto 0;
-            max-width: 300px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 999px;
-            overflow: hidden;
-            padding: 4px;
-        }
-        
-        #sp-ind {
-            position: absolute;
-            top: 4px;
-            bottom: 4px;
-            left: 4px;
-            width: calc(25% - 2px);
-            border-radius: 999px;
-            background: var(--amber);
-            transform: translateX(calc(var(--i, 1) * 100%));
-            transition: transform .3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            box-shadow: 0 2px 10px rgba(255, 170, 0, 0.4);
-        }
-        
-        button.chip {
-            all: unset;
-            cursor: pointer;
-            position: relative;
-            flex: 1;
-            text-align: center;
-            padding: 8px 0;
-            font-size: 14px;
-            color: var(--dim);
-            min-height: 36px;
-            z-index: 2;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.3s;
-        }
-        
-        button.chip[aria-pressed="true"] {
-            color: #000;
-            font-weight: 700;
-        }
-        /* แผงปัญหา และ Probe */
-        
-        #diag {
+        .card {
             pointer-events: auto;
-            display: none;
-            font-size: 13px;
-            line-height: 1.6;
-            background: var(--glass);
-            -webkit-backdrop-filter: blur(16px);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-left: 3px solid var(--warn);
-            border-radius: 8px 16px 16px 8px;
-            padding: 16px
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 12px 14px;
+            max-width: 640px;
+            margin: 0 auto;
+            width: 100%
         }
         
-        #diag.on {
-            display: block
-        }
-        
-        #diag h2 {
-            margin: 0 0 8px;
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--warn)
-        }
-        
-        #diag ul {
-            margin: 8px 0 0;
-            padding-left: 20px;
-            color: var(--dim)
-        }
-        
-        #diag code {
-            color: var(--ice);
-            font-size: 12.5px;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 2px 5px;
-            border-radius: 4px;
-        }
-        
-        #diag-actions {
+        .stepline {
             display: flex;
-            gap: 12px;
-            margin-top: 15px
+            align-items: baseline;
+            gap: 9px
         }
         
-        #diag-actions button {
-            all: unset;
-            cursor: pointer;
+        .stepno {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 12px;
+            color: var(--pwm);
+            font-weight: 600;
+            flex: none
+        }
+        
+        .steptitle {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 600;
+            line-height: 1.35
+        }
+        
+        #stepdesc {
+            margin: 6px 0 0;
             font-size: 13px;
-            color: var(--ink);
-            background: rgba(255, 255, 255, 0.1);
-            padding: 6px 12px;
-            border-radius: 6px;
-            transition: 0.2s;
-        }
-        
-        #diag-actions button:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-        
-        #probe {
-            margin: 14px 0 0;
-            padding: 12px;
-            border-radius: 10px;
-            background: rgba(0, 0, 0, .7);
-            font-size: 11px;
             line-height: 1.6;
-            color: var(--ice);
-            white-space: pre-wrap;
-            overflow-x: auto;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        /* โหมดสลับแสดงผล */
-        
-        html[data-mode="planet"] #scale,
-        html[data-mode="planet"] #titles,
-        html[data-mode="planet"] #btn-restart,
-        html[data-mode="planet"] #btn-next {
-            display: none
+            color: #cfe0e8
         }
         
-        html[data-mode="formation"] #card,
-        html[data-mode="formation"] #picker {
-            display: none
+        #stepspec {
+            margin: 7px 0 0;
+            font-size: 11.5px;
+            line-height: 1.55;
+            color: var(--muted);
+            border-left: 2px solid var(--line);
+            padding-left: 9px
         }
         
-        html[data-mode="planet"] #deck {
-            gap: 0;
-            background: transparent;
-            border: none;
-            box-shadow: none;
-            padding: 0;
+        .track {
+            display: flex;
+            gap: 4px;
+            margin-top: 10px
         }
         
-        html[data-mode="planet"] #speeds {
-            display: none;
+        .track i {
+            height: 3px;
+            flex: 1;
+            background: rgba(255, 255, 255, .14);
+            border-radius: 2px;
+            transition: background .25s
         }
         
-        #ic-play {
-            display: none
+        .track i.on {
+            background: var(--pwm)
         }
         
-        html[data-mode="planet"] #tools {
-            margin-left: auto
+        .row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 10px;
+            flex-wrap: wrap
+        }
+        
+        button {
+            font: inherit;
+            font-size: 13px;
+            color: var(--text);
+            background: rgba(255, 255, 255, .07);
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            padding: 8px 12px;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent
+        }
+        
+        button:active {
+            transform: translateY(1px)
         }
         
         button:focus-visible {
-            outline: 2px solid var(--amber);
-            outline-offset: 3px
+            outline: 2px solid var(--ac);
+            outline-offset: 2px
         }
         
-        svg {
+        button.on {
+            background: rgba(76, 201, 240, .18);
+            border-color: rgba(76, 201, 240, .55);
+            color: #dff5ff
+        }
+        
+        button.wide {
+            flex: 1;
+            min-width: 74px;
+            text-align: center
+        }
+        
+        .sliders {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 8px 10px;
+            align-items: center;
+            margin-top: 10px
+        }
+        
+        .sliders label {
+            font-size: 12px;
+            color: var(--muted)
+        }
+        
+        .val {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 12px;
+            color: var(--pwm);
+            min-width: 62px;
+            text-align: right
+        }
+        
+        input[type=range] {
+            width: 100%;
+            accent-color: #4cc9f0;
+            height: 22px
+        }
+        
+        #more {
+            display: none
+        }
+        
+        #more.show {
             display: block
         }
         
-        @media (max-height:660px) {
-            #stage-desc {
-                -webkit-line-clamp: 1
-            }
-            #card {
-                padding: 15px;
-            }
-            #body-name {
-                font-size: 20px;
-            }
-            #body-about {
-                margin-top: 10px;
-                font-size: 13px;
+        .legend {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            font-size: 11.5px;
+            color: var(--muted)
+        }
+        
+        .legend span {
+            display: flex;
+            align-items: center;
+            gap: 5px
+        }
+        
+        .sw {
+            width: 9px;
+            height: 9px;
+            border-radius: 2px;
+            display: inline-block
+        }
+        
+        .hint {
+            margin: 8px 0 0;
+            font-size: 11.5px;
+            line-height: 1.6;
+            color: var(--muted)
+        }
+        
+        .hint a {
+            color: var(--ac)
+        }
+        
+        @media (max-height:620px) {
+            #stepspec {
+                display: none
             }
         }
     </style>
-
-    <script>
-        window.App = {
-            mode: 'formation',
-            body: 'earth',
-            speed: 1,
-            playing: true,
-            sim: null,
-            previewOn: false,
-            interact: {
-                isDragging: false,
-                vx: 0,
-                vy: 0,
-                autoSpin: true
-            }
-        };
-
-        const STAGES = [{
-            at: 0,
-            title: 'เมฆโมเลกุลและเนบิวลา',
-            desc: 'กลุ่มแก๊สและฝุ่นขนาดยักษ์ลอยเย็นอยู่ในอวกาศ'
-        }, {
-            at: 6,
-            title: 'เมฆยุบตัวด้วยแรงโน้มถ่วง',
-            desc: 'มวลถูกดึงเข้าสู่ศูนย์กลาง เมฆหมุนเร็วขึ้นและแบนตัวลง'
-        }, {
-            at: 12,
-            title: 'จานรวมมวลและดวงอาทิตย์เกิดใหม่',
-            desc: 'ใจกลางร้อนจัดจนเกิดปฏิกิริยานิวเคลียร์ฟิวชัน'
-        }, {
-            at: 18,
-            title: 'ฝุ่นพอกพูนเป็นดาวเคราะห์น้อย',
-            desc: 'เม็ดฝุ่นชนกันเกาะตัวเป็นก้อน แล้วโตขึ้นเรื่อย ๆ'
-        }, {
-            at: 26,
-            title: 'ลมสุริยะกวาดจานฝุ่น',
-            desc: 'ดาวเคราะห์กวาดวงโคจรของตัวเองให้โปร่ง'
-        }, {
-            at: 34,
-            title: 'ระบบสุริยะปัจจุบัน',
-            desc: 'ดาวเคราะห์ 8 ดวงโคจรรอบดวงอาทิตย์ พร้อมแถบดาวเคราะห์น้อย'
-        }];
-        const T_END = 34;
-
-        const PLANETS = [{
-            name: 'พุธ',
-            r: 0.22,
-            s: 0.016,
-            c: 0xa89b8c
-        }, {
-            name: 'ศุกร์',
-            r: 0.31,
-            s: 0.022,
-            c: 0xe0b378
-        }, {
-            name: 'โลก',
-            r: 0.41,
-            s: 0.023,
-            c: 0x4a90d9
-        }, {
-            name: 'อังคาร',
-            r: 0.51,
-            s: 0.018,
-            c: 0xc2593b
-        }, {
-            name: 'พฤหัสบดี',
-            r: 0.68,
-            s: 0.048,
-            c: 0xd8a06a
-        }, {
-            name: 'เสาร์',
-            r: 0.82,
-            s: 0.040,
-            c: 0xe3caa0,
-            ring: true
-        }, {
-            name: 'ยูเรนัส',
-            r: 0.94,
-            s: 0.028,
-            c: 0x8fd3d8
-        }, {
-            name: 'เนปจูน',
-            r: 1.05,
-            s: 0.027,
-            c: 0x4a63c8
-        }];
-
-        const BODIES = [{
-            id: 'sun',
-            th: 'ดวงอาทิตย์',
-            en: 'Sun',
-            kind: 'ดาวฤกษ์',
-            c: '#ffc861',
-            r: 0.46,
-            tilt: 7.3,
-            spin: 0.18,
-            self: true,
-            about: 'ดาวฤกษ์ใจกลางระบบสุริยะ มีมวลถึง 99.8% ของทั้งระบบ พลังงานมาจากปฏิกิริยานิวเคลียร์ฟิวชันที่แกนกลาง',
-            facts: [
-                ['เส้นผ่านศูนย์กลาง', '1,392,000 กม.'],
-                ['อุณหภูมิผิว', '~ 5,500 °C'],
-                ['หมุนรอบตัวเอง', '~ 27 วัน'],
-                ['อายุ', '~ 4,600 ล้านปี']
-            ]
-        }, {
-            id: 'mercury',
-            th: 'ดาวพุธ',
-            en: 'Mercury',
-            kind: 'ดาวเคราะห์หิน',
-            c: '#a89b8c',
-            r: 0.19,
-            tilt: 0.03,
-            spin: 0.12,
-            about: 'ดาวที่อยู่ใกล้ดวงอาทิตย์ที่สุดและเล็กที่สุด ไม่มีชั้นบรรยากาศห่อหุ้ม กลางวันร้อนจัดกลางคืนหนาวจัด ผิวเต็มไปด้วยหลุมอุกกาบาต',
-            facts: [
-                ['เส้นผ่านศูนย์กลาง', '4,879 กม.'],
-                ['ระยะจากดวงอาทิตย์', '57.9 ล้านกม.'],
-                ['1 ปี เท่ากับ', '88 วัน'],
-                ['ดวงจันทร์', 'ไม่มี']
-            ]
-        }, {
-            id: 'venus',
-            th: 'ดาวศุกร์',
-            en: 'Venus',
-            kind: 'ดาวเคราะห์หิน',
-            c: '#e0b378',
-            r: 0.225,
-            tilt: 177,
-            spin: -0.05,
-            about: 'ร้อนที่สุดในระบบสุริยะเพราะบรรยากาศหนาทึบกักความร้อนไว้ และหมุนรอบตัวเองสวนทางกับดาวดวงอื่น',
-            facts: [
-                ['เส้นผ่านศูนย์กลาง', '12,104 กม.'],
-                ['ระยะจากดวงอาทิตย์', '108.2 ล้านกม.'],
-                ['อุณหภูมิผิว', '~ 465 °C'],
-                ['ดวงจันทร์', 'ไม่มี']
-            ]
-        }, {
-            id: 'earth',
-            th: 'โลก',
-            en: 'Earth',
-            kind: 'ดาวเคราะห์หิน',
-            c: '#4a90d9',
-            r: 0.23,
-            tilt: 23.4,
-            spin: 0.5,
-            about: 'ดาวดวงเดียวที่รู้ว่ามีสิ่งมีชีวิต มีน้ำเป็นของเหลวปกคลุมผิวราว 71% และมีชั้นบรรยากาศที่กันรังสีอันตรายไว้',
-            facts: [
-                ['เส้นผ่านศูนย์กลาง', '12,742 กม.'],
-                ['ระยะจากดวงอาทิตย์', '149.6 ล้านกม.'],
-                ['1 วัน เท่ากับ', '23 ชม. 56 นาที'],
-                ['ดวงจันทร์', '1 ดวง']
-            ]
-        }, {
-            id: 'mars',
-            th: 'ดาวอังคาร',
-            en: 'Mars',
-            kind: 'ดาวเคราะห์หิน',
-            c: '#c2593b',
-            r: 0.20,
-            tilt: 25.2,
-            spin: 0.48,
-            about: 'ผิวมีสีแดงจากสนิมเหล็กในดิน มีภูเขาไฟโอลิมปัสสูงราว 22 กิโลเมตร สูงที่สุดในระบบสุริยะ และมีน้ำแข็งที่ขั้ว',
-            facts: [
-                ['เส้นผ่านศูนย์กลาง', '6,779 กม.'],
-                ['ระยะจากดวงอาทิตย์', '227.9 ล้านกม.'],
-                ['1 ปี เท่ากับ', '687 วัน'],
-                ['ดวงจันทร์', '2 ดวง']
-            ]
-        }, {
-            id: 'jupiter',
-            th: 'ดาวพฤหัสบดี',
-            en: 'Jupiter',
-            kind: 'ดาวเคราะห์แก๊ส',
-            c: '#d8a06a',
-            r: 0.42,
-            tilt: 3.1,
-            spin: 1.0,
-            about: 'ใหญ่ที่สุดในระบบสุริยะ เป็นแก๊สทั้งดวง มีจุดแดงใหญ่ซึ่งเป็นพายุที่หมุนต่อเนื่องมานานกว่า 300 ปี',
-            facts: [
-                ['เส้นผ่านศูนย์กลาง', '139,820 กม.'],
-                ['ระยะจากดวงอาทิตย์', '778.5 ล้านกม.'],
-                ['1 วัน เท่ากับ', '9 ชม. 56 นาที'],
-                ['ดวงจันทร์', '~ 95 ดวง']
-            ]
-        }, {
-            id: 'saturn',
-            th: 'ดาวเสาร์',
-            en: 'Saturn',
-            kind: 'ดาวเคราะห์แก๊ส',
-            c: '#e3caa0',
-            r: 0.40,
-            tilt: 26.7,
-            spin: 0.95,
-            ring: true,
-            about: 'เด่นที่วงแหวนซึ่งเกิดจากก้อนน้ำแข็งและฝุ่นนับไม่ถ้วนโคจรรอบดาว วงแหวนกว้างมากแต่บางเพียงไม่กี่สิบเมตร',
-            facts: [
-                ['เส้นผ่านศูนย์กลาง', '116,460 กม.'],
-                ['ระยะจากดวงอาทิตย์', '1,434 ล้านกม.'],
-                ['1 ปี เท่ากับ', '29.4 ปี'],
-                ['ดวงจันทร์', '~ 146 ดวง']
-            ]
-        }, {
-            id: 'uranus',
-            th: 'ดาวยูเรนัส',
-            en: 'Uranus',
-            kind: 'ดาวเคราะห์น้ำแข็ง',
-            c: '#8fd3d8',
-            r: 0.315,
-            tilt: 97.8,
-            spin: 0.6,
-            about: 'แกนหมุนเอียงเกือบ 98 องศาเหมือนกลิ้งไปข้างหน้า จึงมีฤดูกาลยาวนานมาก สีฟ้าเขียวมาจากแก๊สมีเทนในบรรยากาศ',
-            facts: [
-                ['เส้นผ่านศูนย์กลาง', '50,724 กม.'],
-                ['ระยะจากดวงอาทิตย์', '2,871 ล้านกม.'],
-                ['1 ปี เท่ากับ', '84 ปี'],
-                ['ดวงจันทร์', '~ 28 ดวง']
-            ]
-        }, {
-            id: 'neptune',
-            th: 'ดาวเนปจูน',
-            en: 'Neptune',
-            kind: 'ดาวเคราะห์น้ำแข็ง',
-            c: '#4a63c8',
-            r: 0.31,
-            tilt: 28.3,
-            spin: 0.58,
-            about: 'ดาวดวงนอกสุด ลมแรงที่สุดในระบบสุริยะ วัดได้ถึงราว 2,100 กิโลเมตรต่อชั่วโมง ค้นพบจากการคำนวณก่อนจะส่องกล้องเจอ',
-            facts: [
-                ['เส้นผ่านศูนย์กลาง', '49,244 กม.'],
-                ['ระยะจากดวงอาทิตย์', '4,495 ล้านกม.'],
-                ['1 ปี เท่ากับ', '165 ปี'],
-                ['ดวงจันทร์', '~ 16 ดวง']
-            ]
-        }];
-
-        function bodyTex(id) {
-            const c = document.createElement('canvas');
-            c.width = 512;
-            c.height = 256;
-            const x = c.getContext('2d');
-            const bands = stops => {
-                const g = x.createLinearGradient(0, 0, 0, 256);
-                stops.forEach(([p, col]) => g.addColorStop(p, col));
-                x.fillStyle = g;
-                x.fillRect(0, 0, 512, 256);
-            };
-            const blob = (n, col, w, h, a) => {
-                for (let i = 0; i < n; i++) {
-                    x.globalAlpha = a * (0.4 + Math.random() * 0.6);
-                    x.fillStyle = col;
-                    x.beginPath();
-                    x.ellipse(Math.random() * 512, 20 + Math.random() * 216, w * (0.4 + Math.random()), h * (0.4 + Math.random()), 0, 0, 6.3);
-                    x.fill();
-                }
-                x.globalAlpha = 1;
-            };
-            const streak = (n, col, a) => {
-                x.globalAlpha = a;
-                x.strokeStyle = col;
-                x.lineWidth = 3;
-                for (let i = 0; i < n; i++) {
-                    const y = Math.random() * 256;
-                    x.beginPath();
-                    x.moveTo(0, y);
-                    for (let px = 0; px <= 512; px += 32) x.lineTo(px, y + Math.sin(px / 60 + i) * 5);
-                    x.stroke();
-                }
-                x.globalAlpha = 1;
-            };
-            const caps = (col, h) => {
-                x.fillStyle = col;
-                x.fillRect(0, 0, 512, h);
-                x.fillRect(0, 256 - h, 512, h);
-            };
-
-            if (id === 'sun') {
-                bands([
-                    [0, '#ff9c2e'],
-                    [.5, '#ffd977'],
-                    [1, '#ff9c2e']
-                ]);
-                blob(90, '#fff3c0', 26, 12, .5);
-                blob(40, '#ff7b1c', 20, 9, .35);
-            } else if (id === 'mercury') {
-                bands([
-                    [0, '#6f665d'],
-                    [.45, '#a89b8c'],
-                    [1, '#6f665d']
-                ]);
-                for (let i = 0; i < 130; i++) {
-                    const cx = Math.random() * 512,
-                        cy = 12 + Math.random() * 232,
-                        r = 3 + Math.random() * 13;
-                    x.globalAlpha = .5;
-                    x.fillStyle = '#5d564e';
-                    x.beginPath();
-                    x.arc(cx, cy, r, 0, 6.3);
-                    x.fill();
-                    x.globalAlpha = .4;
-                    x.fillStyle = '#c6b9a8';
-                    x.beginPath();
-                    x.arc(cx - r * .2, cy - r * .25, r * .7, 0, 6.3);
-                    x.fill();
-                }
-                x.globalAlpha = 1;
-            } else if (id === 'venus') {
-                bands([
-                    [0, '#c98b3f'],
-                    [.4, '#f0d9a0'],
-                    [.7, '#e2b26a'],
-                    [1, '#c98b3f']
-                ]);
-                streak(22, '#fff4d8', .35);
-                blob(45, '#b3762f', 34, 10, .25);
-            } else if (id === 'earth') {
-                bands([
-                    [0, '#1d4f8c'],
-                    [.5, '#2f79c4'],
-                    [1, '#1d4f8c']
-                ]);
-                blob(26, '#2f7a3f', 40, 20, .95);
-                blob(20, '#7d6b3a', 22, 12, .7);
-                caps('#eef4ff', 14);
-                streak(14, '#ffffff', .3);
-            } else if (id === 'mars') {
-                bands([
-                    [0, '#8c3b22'],
-                    [.45, '#c96a42'],
-                    [1, '#8c3b22']
-                ]);
-                blob(50, '#7a3319', 30, 14, .5);
-                blob(24, '#e0a071', 18, 9, .35);
-                caps('#f2ece6', 11);
-            } else if (id === 'jupiter') {
-                bands([
-                    [0, '#8a6440'],
-                    [.12, '#e8d0a8'],
-                    [.26, '#b98a5c'],
-                    [.4, '#f2e0bd'],
-                    [.52, '#a97b4f'],
-                    [.66, '#eddab5'],
-                    [.8, '#b1804f'],
-                    [1, '#8a6440']
-                ]);
-                streak(30, '#f7ecd2', .22);
-                blob(30, '#8f5b34', 40, 8, .3);
-                x.globalAlpha = .85;
-                x.fillStyle = '#c0492c';
-                x.beginPath();
-                x.ellipse(150, 168, 44, 20, 0, 0, 6.3);
-                x.fill();
-                x.globalAlpha = .5;
-                x.fillStyle = '#e0794f';
-                x.beginPath();
-                x.ellipse(150, 168, 28, 12, 0, 0, 6.3);
-                x.fill();
-                x.globalAlpha = 1;
-            } else if (id === 'saturn') {
-                bands([
-                    [0, '#a8875a'],
-                    [.2, '#efdcb4'],
-                    [.42, '#dcc394'],
-                    [.6, '#f3e5c4'],
-                    [.85, '#c9a877'],
-                    [1, '#a8875a']
-                ]);
-                streak(20, '#fff6e0', .18);
-            } else if (id === 'uranus') {
-                bands([
-                    [0, '#5fa8ad'],
-                    [.45, '#a9e2e6'],
-                    [1, '#5fa8ad']
-                ]);
-                streak(10, '#d8f6f8', .2);
-            } else {
-                bands([
-                    [0, '#22317f'],
-                    [.45, '#4a63c8'],
-                    [1, '#22317f']
-                ]);
-                streak(14, '#9fb4ff', .22);
-                x.globalAlpha = .7;
-                x.fillStyle = '#1a2360';
-                x.beginPath();
-                x.ellipse(320, 150, 40, 18, 0, 0, 6.3);
-                x.fill();
-                x.globalAlpha = 1;
-            }
-            const t = new THREE.CanvasTexture(c);
-            t.anisotropy = 4;
-            return t;
-        }
-
-        const SYSTEM_SIZE = 1.55;
-        const BODY_SIZE = 0.6;
-        const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
-        const ease = v => v * v * (3 - 2 * v);
-
-        function softTexture(core) {
-            const c = document.createElement('canvas');
-            c.width = c.height = 64;
-            const x = c.getContext('2d');
-            const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
-            gr.addColorStop(0, 'rgba(255,255,255,1)');
-            gr.addColorStop(core, 'rgba(255,255,255,.5)');
-            gr.addColorStop(1, 'rgba(255,255,255,0)');
-            x.fillStyle = gr;
-            x.fillRect(0, 0, 64, 64);
-            return new THREE.CanvasTexture(c);
-        }
-
-        // -------------------------------------------------------------
-        // ระบบสัมผัสสำหรับปัดหน้าจอเพื่อหมุนดาว 360 องศา
-        // -------------------------------------------------------------
-        document.addEventListener('pointerdown', e => {
-            if (App.mode !== 'planet') return;
-            // ถ้าคลิกโดนปุ่ม UI หรือ Card ไม่ต้องหมุนดาว
-            if (e.target.closest('#card, #picker, #deck, #tabs, .tool')) return;
-
-            App.interact.isDragging = true;
-            App.interact.autoSpin = false;
-            App.interact.px = e.clientX;
-            App.interact.py = e.clientY;
-            App.interact.vx = 0;
-            App.interact.vy = 0;
-            clearTimeout(App.interact.timeout);
-        });
-
-        document.addEventListener('pointermove', e => {
-            if (!App.interact.isDragging) return;
-            const dx = e.clientX - App.interact.px;
-            const dy = e.clientY - App.interact.py;
-            App.interact.px = e.clientX;
-            App.interact.py = e.clientY;
-            App.interact.vx = dx * 0.008; // ความเร็วแนวแกน X (ปัดซ้ายขวา)
-            App.interact.vy = dy * 0.008; // ความเร็วแนวแกน Y (ปัดขึ้นลง)
-
-            if (App.sim && App.sim.bodies[App.body]) {
-                const b = App.sim.bodies[App.body];
-                b.spinner.rotation.y += App.interact.vx;
-                b.spinner.rotation.x += App.interact.vy;
-                // ป้องกันไม่ให้ดาวหงายท้องกลับหัวมากเกินไป
-                b.spinner.rotation.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, b.spinner.rotation.x));
-            }
-        });
-
-        const stopDrag = () => {
-            if (App.interact.isDragging) {
-                App.interact.isDragging = false;
-                // ปล่อยนิ้ว 2.5 วินาทีแล้วค่อยกลับมาหมุนเอง (Auto Spin)
-                App.interact.timeout = setTimeout(() => {
-                    App.interact.autoSpin = true;
-                }, 2500);
-            }
-        };
-        document.addEventListener('pointerup', stopDrag);
-        document.addEventListener('pointercancel', stopDrag);
-
-
-        if (window.AFRAME) AFRAME.registerComponent('solar-system', {
-            init: function() {
-                this.t = 0;
-                const g = this.group = new THREE.Group();
-                this.el.object3D.add(g);
-                App.sim = this;
-                const sys = this.sys = new THREE.Group();
-                sys.scale.setScalar(SYSTEM_SIZE);
-                g.add(sys);
-                g.add(new THREE.AmbientLight(0xbfd0ff, 0.55));
-                this.sunLight = new THREE.PointLight(0xfff0c4, 0, 7);
-                g.add(this.sunLight);
-
-                const dot = softTexture(0.30),
-                    halo = softTexture(0.06);
-                const sq = [];
-                const L = 0.16;
-                [
-                    [-1, -1],
-                    [1, -1],
-                    [1, 1],
-                    [-1, 1]
-                ].forEach(([sx, sz]) => {
-                    const x = sx * 0.5,
-                        z = sz * 0.5;
-                    sq.push(x, 0, z, x - sx * L, 0, z);
-                    sq.push(x, 0, z, x, 0, z - sz * L);
-                });
-                const fgeo = new THREE.BufferGeometry();
-                fgeo.setAttribute('position', new THREE.Float32BufferAttribute(sq, 3));
-                this.frame = new THREE.LineSegments(fgeo, new THREE.LineBasicMaterial({
-                    color: 0x9bd7ff,
-                    transparent: true,
-                    opacity: 0.6
-                }));
-                sys.add(this.frame);
-
-                this.seed = new THREE.Mesh(new THREE.SphereGeometry(0.035, 16, 12), new THREE.MeshBasicMaterial({
-                    color: 0x8fd3ff,
-                    transparent: true,
-                    opacity: 0.9
-                }));
-                sys.add(this.seed);
-
-                const N = 720;
-                this.dust = [];
-                const dpos = new Float32Array(N * 3),
-                    dcol = new Float32Array(N * 3);
-                for (let i = 0; i < N; i++) {
-                    const rn = 0.35 + 1.2 * Math.pow(Math.random(), 0.75),
-                        ph = Math.acos(2 * Math.random() - 1),
-                        rd = 0.17 + Math.pow(Math.random(), 0.85) * 0.95;
-                    this.dust.push({
-                        ang: Math.random() * Math.PI * 2,
-                        rh0: rn * Math.sin(ph),
-                        y0: rn * Math.cos(ph) * 0.9,
-                        rd: rd,
-                        yd: (Math.random() * 2 - 1) * (0.010 + 0.028 * rd),
-                        tw: Math.random() * 6.28
-                    });
-                    const b = 0.72 + Math.random() * 0.28;
-                    dcol[i * 3] = b;
-                    dcol[i * 3 + 1] = b * 0.97;
-                    dcol[i * 3 + 2] = b;
-                }
-                const dgeo = new THREE.BufferGeometry();
-                dgeo.setAttribute('position', new THREE.BufferAttribute(dpos, 3));
-                dgeo.setAttribute('color', new THREE.BufferAttribute(dcol, 3));
-                this.dustMat = new THREE.PointsMaterial({
-                    size: 0.042,
-                    map: dot,
-                    sizeAttenuation: true,
-                    vertexColors: true,
-                    transparent: true,
-                    opacity: 0.85,
-                    depthWrite: false
-                });
-                this.dustPts = new THREE.Points(dgeo, this.dustMat);
-                this.dustPts.frustumCulled = false;
-                sys.add(this.dustPts);
-
-                const B = 90;
-                this.belt = [];
-                const bpos = new Float32Array(B * 3);
-                for (let i = 0; i < B; i++) this.belt.push({
-                    ang: Math.random() * Math.PI * 2,
-                    r: 0.565 + Math.random() * 0.055,
-                    y: (Math.random() * 2 - 1) * 0.012
-                });
-                const bgeo = new THREE.BufferGeometry();
-                bgeo.setAttribute('position', new THREE.BufferAttribute(bpos, 3));
-                this.beltMat = new THREE.PointsMaterial({
-                    size: 0.022,
-                    map: dot,
-                    color: 0xd9cbb4,
-                    sizeAttenuation: true,
-                    transparent: true,
-                    opacity: 0,
-                    depthWrite: false
-                });
-                this.beltPts = new THREE.Points(bgeo, this.beltMat);
-                this.beltPts.frustumCulled = false;
-                sys.add(this.beltPts);
-
-                this.sun = new THREE.Group();
-                this.sunCore = new THREE.Mesh(new THREE.SphereGeometry(0.075, 26, 18), new THREE.MeshBasicMaterial({
-                    color: 0xfff4cf
-                }));
-                this.sunGlow = new THREE.Mesh(new THREE.SphereGeometry(0.105, 18, 14), new THREE.MeshBasicMaterial({
-                    color: 0xffa22e,
-                    transparent: true,
-                    opacity: 0.3,
-                    blending: THREE.AdditiveBlending,
-                    depthWrite: false
-                }));
-                this.sunHalo = new THREE.Sprite(new THREE.SpriteMaterial({
-                    map: halo,
-                    color: 0xffb347,
-                    transparent: true,
-                    opacity: 0.85,
-                    blending: THREE.AdditiveBlending,
-                    depthWrite: false
-                }));
-                this.sun.add(this.sunCore, this.sunGlow, this.sunHalo);
-                this.sun.scale.setScalar(0.0001);
-                sys.add(this.sun);
-
-                this.planets = PLANETS.map((p, i) => {
-                    const mesh = new THREE.Mesh(new THREE.SphereGeometry(p.s, 20, 14), new THREE.MeshLambertMaterial({
-                        color: p.c
-                    }));
-                    mesh.scale.setScalar(0.0001);
-                    if (p.ring) {
-                        const ring = new THREE.Mesh(new THREE.RingGeometry(p.s * 1.5, p.s * 2.3, 40), new THREE.MeshBasicMaterial({
-                            color: 0xe9d9b4,
-                            side: THREE.DoubleSide,
-                            transparent: true,
-                            opacity: 0.55
-                        }));
-                        ring.rotation.set(-Math.PI / 2, 0.32, 0);
-                        mesh.add(ring);
-                    }
-                    sys.add(mesh);
-                    const pts = [];
-                    for (let k = 0; k <= 72; k++) {
-                        const a = k / 72 * Math.PI * 2;
-                        pts.push(Math.cos(a) * p.r, 0, Math.sin(a) * p.r);
-                    }
-                    const ogeo = new THREE.BufferGeometry();
-                    ogeo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
-                    const orbit = new THREE.Line(ogeo, new THREE.LineBasicMaterial({
-                        color: 0x9fd0ff,
-                        transparent: true,
-                        opacity: 0,
-                        depthWrite: false
-                    }));
-                    sys.add(orbit);
-                    return {...p,
-                        mesh,
-                        orbit,
-                        ang: Math.random() * Math.PI * 2,
-                        order: i
-                    };
-                });
-
-                const show = this.show = new THREE.Group();
-                show.visible = false;
-                g.add(show);
-                const sunLamp = new THREE.DirectionalLight(0xffffff, 1.15);
-                sunLamp.position.set(-0.7, 0.85, 0.9);
-                show.add(sunLamp);
-
-                this.bodies = {};
-                this.rMax = Math.max.apply(null, BODIES.map(b => b.r * BODY_SIZE));
-                BODIES.forEach(b => {
-                    const R = b.r * BODY_SIZE;
-                    const pivot = new THREE.Group();
-                    // -------------------------------------------------------------------------
-                    // แก้ไขให้ดาวยกลอยสูงขึ้น (จากเดิม 0.36 เป็น 1.15) เพื่อพ้นจากการโดนการ์ดบัง
-                    // -------------------------------------------------------------------------
-                    pivot.position.y = 1.15;
-                    pivot.rotation.z = b.tilt * Math.PI / 180;
-                    pivot.visible = false;
-                    const mat = b.self ? new THREE.MeshBasicMaterial({
-                        map: bodyTex(b.id)
-                    }) : new THREE.MeshPhongMaterial({
-                        map: bodyTex(b.id),
-                        shininess: 6,
-                        specular: 0x222222
-                    });
-                    const spinner = new THREE.Group();
-                    pivot.add(spinner);
-                    const ball = new THREE.Mesh(new THREE.SphereGeometry(R, 48, 32), mat);
-                    spinner.add(ball);
-                    if (b.self) {
-                        const halo = new THREE.Sprite(new THREE.SpriteMaterial({
-                            map: softTexture(0.06),
-                            color: 0xffb347,
-                            transparent: true,
-                            opacity: 0.55,
-                            blending: THREE.AdditiveBlending,
-                            depthWrite: false
-                        }));
-                        halo.scale.setScalar(R * 1.9);
-                        pivot.add(halo);
-                    }
-                    if (b.ring) {
-                        [
-                            [1.35, 1.62, .55],
-                            [1.66, 1.94, .38],
-                            [2.0, 2.24, .5],
-                            [2.3, 2.42, .22]
-                        ].forEach(([i0, i1, op]) => {
-                            const r = new THREE.Mesh(new THREE.RingGeometry(R * i0, R * i1, 96), new THREE.MeshBasicMaterial({
-                                color: 0xe7d4ab,
-                                side: THREE.DoubleSide,
-                                transparent: true,
-                                opacity: op,
-                                depthWrite: false
-                            }));
-                            r.rotation.x = -Math.PI / 2;
-                            pivot.add(r);
-                        });
-                    }
-                    show.add(pivot);
-                    this.bodies[b.id] = {
-                        pivot,
-                        spinner,
-                        spin: b.spin
-                    };
-                });
-
-                this.cNeb = new THREE.Color(0x8090e8);
-                this.cDisk = new THREE.Color(0xffb070);
-                this.markers = ['marker', 'marker-hiro'].map(id => document.getElementById(id)).filter(Boolean);
-                this.locked = null;
-                g.visible = false;
-                this.draw(0);
-            },
-
-            fitBody: function() {
-                let f = 1;
-                const cam = this.el.sceneEl && this.el.sceneEl.camera;
-                const cv = document.querySelector('.a-canvas');
-                if (cam && cv && cv.clientWidth > 0 && this.rMax > 0) {
-                    const d = App.previewOn ? 1.7 : (this.group.position.length() || 1.7);
-                    const e = cam.projectionMatrix.elements;
-                    const tanHalf = e[0] > 0.001 ? 1 / e[0] : 0.55;
-                    const seen = Math.min(1, window.innerWidth / cv.clientWidth);
-                    const halfWidth = d * tanHalf * seen;
-                    f = halfWidth * 0.60 / this.rMax;
-                }
-                f = Math.max(0.4, Math.min(3.6, f));
-                const cur = this.show.scale.x || 1;
-                this.show.scale.setScalar(cur + (f - cur) * 0.12);
-            },
-
-            setMode: function(m) {
-                App.mode = m;
-                this.sys.visible = (m === 'formation');
-                this.show.visible = (m === 'planet');
-            },
-            selectBody: function(id) {
-                App.body = id;
-                for (const key in this.bodies) this.bodies[key].pivot.visible = (key === id);
-            },
-            reset: function() {
-                this.t = 0;
-                this.dust.forEach(p => p.ang = Math.random() * Math.PI * 2);
-                this.planets.forEach(p => p.ang = Math.random() * Math.PI * 2);
-                this.draw(0);
-            },
-
-            tick: function(time, delta) {
-                try {
-                    if (!App.previewOn) {
-                        const g = this.group;
-                        let el = this.locked && this.locked.object3D && this.locked.object3D.visible ? this.locked : null;
-                        if (!el) el = this.markers.find(e => e.object3D && e.object3D.visible) || null;
-                        this.locked = el;
-                        g.visible = !!el;
-                        if (el) {
-                            const m = el.object3D;
-                            const k = g.userData.settled ? 0.35 : 1;
-                            g.position.lerp(m.position, k);
-                            g.quaternion.slerp(m.quaternion, k);
-                            g.scale.lerp(m.scale, k);
-                            g.userData.settled = true;
-                        } else {
-                            g.userData.settled = false;
-                        }
-                    }
-                    const dt = Math.min(delta, 60) / 1000 * (App.playing ? App.speed : 0);
-                    this.t += dt;
-
-                    // การหมุนสำหรับโหมดดาวเคราะห์ (รวมการหมุนด้วยมือ)
-                    if (App.mode === 'planet') {
-                        const b = this.bodies[App.body];
-                        if (b) {
-                            if (App.interact.autoSpin) {
-                                // หมุนอัตโนมัติรอบแกนตัวเอง
-                                b.spinner.rotation.y += dt * b.spin;
-                                // ค่อยๆ ปรับแกน X กลับมาขนานกับพื้น
-                                b.spinner.rotation.x += (0 - b.spinner.rotation.x) * 0.05;
-                            } else if (!App.interact.isDragging) {
-                                // ความเฉื่อยเมื่อปล่อยนิ้ว (Inertia)
-                                b.spinner.rotation.y += App.interact.vx;
-                                b.spinner.rotation.x += App.interact.vy;
-                                b.spinner.rotation.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, b.spinner.rotation.x));
-                                App.interact.vx *= 0.92; // ความเร็วค่อยๆ ลดลง
-                                App.interact.vy *= 0.92;
-                            }
-                        }
-                        this.fitBody();
-                        return;
-                    }
-
-                    this.draw(dt);
-                    if (window.HUD) HUD.frame(this.t);
-                } catch (e) {
-                    App.lastError = (e && e.message) || String(e);
-                    if (!this._loggedError) {
-                        this._loggedError = true;
-                        console.error('[tick]', e);
-                    }
-                }
-            },
-
-            draw: function(dt) {
-                const t = this.t,
-                    pCollapse = ease(clamp01((t - 5) / 7)),
-                    pSun = ease(clamp01((t - 11) / 5.5)),
-                    pClump = clamp01((t - 18) / 8),
-                    pClear = ease(clamp01((t - 26) / 8)),
-                    pRings = ease(clamp01((t - 23) / 7));
-                const arr = this.dustPts.geometry.attributes.position.array;
-                for (let i = 0; i < this.dust.length; i++) {
-                    const p = this.dust[i],
-                        rh = p.rh0 + (p.rd - p.rh0) * pCollapse,
-                        y = p.y0 + (p.yd - p.y0) * pCollapse + Math.sin(t * 0.6 + p.tw) * 0.055 * (1 - pCollapse);
-                    p.ang += dt * Math.min(6, (0.26 + 0.95 * pCollapse) * Math.pow(0.42 / Math.max(rh, 0.1), 1.5));
-                    arr[i * 3] = Math.cos(p.ang) * rh;
-                    arr[i * 3 + 1] = y;
-                    arr[i * 3 + 2] = Math.sin(p.ang) * rh;
-                }
-                this.dustPts.geometry.attributes.position.needsUpdate = true;
-                this.dustMat.color.copy(this.cNeb).lerp(this.cDisk, pCollapse);
-                this.dustMat.opacity = 0.85 * (1 - 0.9 * pClear);
-                this.dustMat.size = 0.042 - 0.014 * pCollapse;
-
-                const barr = this.beltPts.geometry.attributes.position.array;
-                for (let i = 0; i < this.belt.length; i++) {
-                    const b = this.belt[i];
-                    b.ang += dt * 0.9 * Math.pow(0.42 / b.r, 1.5);
-                    barr[i * 3] = Math.cos(b.ang) * b.r;
-                    barr[i * 3 + 1] = b.y;
-                    barr[i * 3 + 2] = Math.sin(b.ang) * b.r;
-                }
-                this.beltPts.geometry.attributes.position.needsUpdate = true;
-                this.beltMat.opacity = 0.7 * pClear;
-
-                const flick = 1 + 0.05 * Math.sin(t * 9) * pSun * (1 - pSun) * 4;
-                this.sun.scale.setScalar(Math.max(0.0001, pSun * flick));
-                this.sunGlow.scale.setScalar(1 + 0.14 * Math.sin(t * 1.7));
-                this.sunHalo.scale.setScalar(0.62 + 0.05 * Math.sin(t * 1.1));
-                this.sunHalo.material.opacity = 0.75 * pSun;
-                this.sunLight.intensity = 1.9 * pSun;
-                this.seed.material.opacity = 0.9 * (1 - pSun);
-                this.frame.material.opacity = 0.55 - 0.3 * pClear;
-
-                for (const p of this.planets) {
-                    const a = clamp01((pClump - p.order * 0.045) / 0.4),
-                        sc = a * a * (3 - 2 * a);
-                    p.mesh.scale.setScalar(Math.max(0.0001, sc));
-                    p.ang += dt * 0.68 * Math.pow(0.42 / p.r, 1.5);
-                    p.mesh.position.set(Math.cos(p.ang) * p.r, 0, Math.sin(p.ang) * p.r);
-                    p.mesh.rotation.y += dt * 0.8;
-                    p.orbit.material.opacity = 0.32 * pRings * (0.35 + 0.65 * sc);
-                }
-            }
-        });
-    </script>
 </head>
 
 <body>
 
-    <a-scene embedded vr-mode-ui="enabled: false" light="defaultLightsEnabled: false" renderer="antialias: true" arjs="sourceType: webcam; sourceWidth: 1280; sourceHeight: 960; displayWidth: 1280; displayHeight: 960; detectionMode: mono; patternRatio: 0.5; maxDetectionRate: 60; debugUIEnabled: false; cameraParametersUrl: camera_para.dat">
-        <a-marker id="marker" type="pattern" url="marker.patt"></a-marker>
-        <a-marker id="marker-hiro" type="pattern" url="pattern-hiro.patt"></a-marker>
-        <a-entity id="sim" solar-system></a-entity>
-        <a-entity camera look-controls="enabled: false" position="0 0 0">
-            <a-entity id="preview" position="0 -0.35 -3.6" rotation="-22 0 0"></a-entity>
+    <div class="arjs-loader" id="loader">กำลังเปิดกล้อง…</div>
+
+    <div id="hud">
+        <div class="badge">
+            <h1>VEICHI AC10 Series</h1>
+            <p>อินเวอร์เตอร์ควบคุมความเร็วรอบ • ภาพตัดขวางแบบ AR</p>
+        </div>
+        <div class="badge">
+            <div id="status"><span id="dot"></span><span id="statustext">ค้นหา marker</span></div>
+        </div>
+    </div>
+
+    <div id="dock">
+        <div class="card">
+            <div class="stepline">
+                <span class="stepno" id="stepno">00</span>
+                <h2 class="steptitle" id="steptitle">—</h2>
+            </div>
+            <p id="stepdesc">—</p>
+            <p id="stepspec"></p>
+            <div class="track" id="track"></div>
+
+            <div class="row">
+                <button id="prev" class="wide">ย้อนกลับ</button>
+                <button id="play" class="wide on">หยุดเล่นอัตโนมัติ</button>
+                <button id="next" class="wide">ถัดไป</button>
+            </div>
+
+            <div class="sliders">
+                <label for="freq">ความถี่เอาต์พุต</label>
+                <input id="freq" type="range" min="0" max="60" step="0.5" value="50">
+                <span class="val" id="freqval">50.00 Hz</span>
+                <label for="size">ขนาดโมเดล</label>
+                <input id="size" type="range" min="0.25" max="1.2" step="0.05" value="0.6">
+                <span class="val" id="sizeval">0.60×</span>
+            </div>
+
+            <div class="row">
+                <button id="btnCut" class="on">เปิดฝาดูภายใน</button>
+                <button id="btnExp">แยกชิ้นส่วน</button>
+                <button id="btnFlow" class="on">การไหลของพลังงาน</button>
+                <button id="btnMore">วิธีใช้</button>
+            </div>
+
+            <div id="more">
+                <div class="legend">
+                    <span><i class="sw" style="background:var(--ac)"></i>ไฟเข้า AC</span>
+                    <span><i class="sw" style="background:var(--dc)"></i>บัส DC</span>
+                    <span><i class="sw" style="background:var(--pwm)"></i>เอาต์พุต PWM</span>
+                    <span><i class="sw" style="background:var(--air)"></i>ทิศทางลม</span>
+                </div>
+                <p class="hint">
+                    เปิดหน้านี้ผ่าน <b>https://</b> หรือ <b>localhost</b> เพื่อให้เบราว์เซอร์อนุญาตใช้กล้อง แล้วเล็งไปที่
+                    <a href="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.png" target="_blank" rel="noopener">Hiro marker</a> · ไม่มี marker ก็กด
+                    <button id="btnPreview" style="padding:3px 8px;font-size:12px">โหมดไม่ใช้ marker</button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <a-scene vr-mode-ui="enabled: false" loading-screen="enabled: false" renderer="antialias: true; colorManagement: true; alpha: true; precision: medium" embedded arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false; patternRatio: 0.5;">
+
+        <a-entity light="type: hemisphere; color: #eaf4ff; groundColor: #2b3740; intensity: 1.0"></a-entity>
+        <a-entity light="type: directional; color: #ffffff; intensity: 0.7" position="1.6 2.6 2.0"></a-entity>
+        <a-entity light="type: directional; color: #9ad8ff; intensity: 0.3" position="-1.8 1.4 -1.6"></a-entity>
+
+        <a-marker id="markerRoot" preset="hiro" smooth="true" smoothCount="8" smoothTolerance="0.012" smoothThreshold="4"></a-marker>
+
+        <a-entity camera>
+            <a-entity id="previewRoot" position="0 -0.4 -2.6"></a-entity>
         </a-entity>
     </a-scene>
 
-    <div id="hud">
-        <header id="top">
-            <div class="col">
-                <div id="tabs" role="tablist">
-                    <button class="tab" type="button" role="tab" data-mode="formation" aria-selected="true">กำเนิดระบบสุริยะ</button>
-                    <button class="tab" type="button" role="tab" data-mode="planet" aria-selected="false">ดาวเคราะห์</button>
-                </div>
-                <div id="head-row">
-                    <div id="titles">
-                        <h1 id="stage-title">เมฆโมเลกุลและเนบิวลา</h1>
-                        <p id="stage-desc">กลุ่มแก๊สและฝุ่นขนาดยักษ์ลอยเย็นอยู่ในอวกาศ</p>
-                    </div>
-                    <div id="tools">
-                        <button id="btn-hide" class="tool" type="button" aria-label="ซ่อนแผงควบคุม"><svg width="17"
-                                height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                                stroke-linecap="round">
-                                <path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z" />
-                                <circle cx="12" cy="12" r="2.6" />
-                            </svg></button>
-                        <button id="btn-info" class="tool" type="button" aria-label="ตัวเลขตรวจสอบ"><svg width="17"
-                                height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                                stroke-linecap="round">
-                                <path d="M12 10.5v6" />
-                                <circle cx="12" cy="7.2" r="1.1" fill="currentColor" stroke="none" />
-                                <circle cx="12" cy="12" r="9" />
-                            </svg></button>
-                    </div>
-                </div>
-                <div id="scale" role="progressbar" aria-label="ความคืบหน้าของการจำลอง">
-                    <div id="rail"></div>
-                    <div id="fill"></div>
-                    <div id="head"></div><span id="count">1 / 6</span>
-                </div>
-                <pre id="probe" hidden></pre>
-            </div>
-        </header>
-
-        <div id="mid">
-            <div id="hint"><span class="dot"></span><span>หันกล้องไปที่ marker หรือ <button id="btn-preview"
-                        class="link" type="button">ดูแบบไม่ใช้ marker</button></span></div>
-            <section id="diag" class="col" aria-live="polite">
-                <h2 id="diag-title">—</h2>
-                <div id="diag-body"></div>
-                <div id="diag-actions"><button id="diag-close" type="button">ปิด</button><button id="diag-reload" type="button">โหลดหน้าใหม่</button><button id="diag-preview" type="button">ดูแบบไม่ใช้กล้อง</button></div>
-            </section>
-        </div>
-
-        <footer id="bottom">
-            <div class="col">
-                <article id="card" aria-live="polite">
-                    <div id="card-top">
-                        <h2 id="body-name">โลก</h2>
-                        <span id="body-en">Earth</span>
-                        <span id="body-kind">ดาวเคราะห์หิน</span>
-                    </div>
-                    <p id="body-about"></p>
-                    <dl id="body-facts"></dl>
-                    <p id="body-note">👆 ใช้นิ้วปัดหน้าจอเพื่อหมุนดูรอบดวงดาว</p>
-                </article>
-
-                <div id="picker" role="tablist" aria-label="เลือกดาว"></div>
-
-                <div id="deck">
-                    <button class="act" id="btn-restart" type="button"><span class="ring"><svg width="19" height="19"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M3 12a9 9 0 1 0 3-6.7" />
-                                <path d="M3 4v5h5" />
-                            </svg></span>เริ่มใหม่</button>
-                    <button class="act" id="btn-play" type="button" aria-pressed="true"><span class="ring"><svg
-                                id="ic-pause" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <rect x="6" y="4" width="4" height="16" rx="1.3" />
-                                <rect x="14" y="4" width="4" height="16" rx="1.3" />
-                            </svg><svg id="ic-play" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M8 4.6v14.8L20 12z" />
-                            </svg></span><span id="play-label">หยุด</span></button>
-                    <button class="act" id="btn-next" type="button"><span class="ring"><svg width="19" height="19"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M6 5l9 7-9 7z" />
-                                <path d="M18 5v14" />
-                            </svg></span>ขั้นถัดไป</button>
-                </div>
-                <div id="speeds" role="group" aria-label="ความเร็วการจำลอง"><span id="sp-ind"></span></div>
-            </div>
-        </footer>
-    </div>
-
     <script>
-        window.HUD = {
-            lastStage: -1,
-            init() {
-                const box = document.getElementById('speeds');
-                const SPEEDS = [0.5, 1, 2, 4];
-                SPEEDS.forEach((v, i) => {
-                    const b = document.createElement('button');
-                    b.className = 'chip';
-                    b.type = 'button';
-                    b.textContent = v + '\u00d7';
-                    b.setAttribute('aria-pressed', String(v === 1));
-                    b.onclick = () => {
-                        App.speed = v;
-                        box.style.setProperty('--i', i);
-                        [...box.querySelectorAll('.chip')].forEach(c => c.setAttribute('aria-pressed', String(c === b)));
-                        if (!App.playing) this.togglePlay();
-                    };
-                    box.appendChild(b);
-                });
-                box.style.setProperty('--i', SPEEDS.indexOf(1));
-                const scale = document.getElementById('scale');
-                this.notches = STAGES.map(st => {
-                    const n = document.createElement('i');
-                    n.className = 'notch';
-                    n.style.left = (st.at / T_END * 100) + '%';
-                    scale.appendChild(n);
-                    return n;
-                });
-                this.fill = document.getElementById('fill');
-                this.headDot = document.getElementById('head');
-                this.count = document.getElementById('count');
-                document.getElementById('btn-play').onclick = () => this.togglePlay();
-                document.getElementById('btn-restart').onclick = () => {
-                    if (App.sim) App.sim.reset();
-                    this.lastStage = -1;
-                };
-                document.getElementById('btn-next').onclick = () => {
-                    if (!App.sim) return;
-                    const nxt = STAGES.find(st => st.at > App.sim.t + 0.05);
-                    App.sim.t = nxt ? nxt.at : 0;
-                    App.sim.draw(0);
-                };
-                document.getElementById('btn-preview').onclick = () => Diag.toggle();
-                document.getElementById('btn-info').onclick = () => Probe.toggle();
-                document.getElementById('diag-preview').onclick = () => Diag.preview();
-                document.getElementById('diag-reload').onclick = () => location.reload();
-                document.getElementById('diag-close').onclick = () => Diag.hide();
-                document.querySelectorAll('#tabs .tab').forEach(tb => {
-                    tb.onclick = () => this.setMode(tb.dataset.mode);
-                });
-                Picker.init();
-                this.setMode('formation');
-                const root = document.documentElement;
-                document.getElementById('btn-hide').onclick = () => {
-                    root.classList.add('bare');
-                    setTimeout(() => document.addEventListener('pointerdown', function back() {
-                        root.classList.remove('bare');
-                        document.removeEventListener('pointerdown', back);
-                    }, {
-                        once: true
-                    }), 60);
-                };
-            },
-            setMode(m) {
-                App.mode = m;
-                document.documentElement.dataset.mode = m;
-                const holder = document.getElementById('preview');
-                if (holder) {
-                    holder.setAttribute('position', m === 'planet' ? '0 -0.1 -1.7' : '0 -0.35 -3.6');
-                    holder.setAttribute('rotation', m === 'planet' ? '0 0 0' : '-22 0 0');
-                }
-                document.querySelectorAll('#tabs .tab').forEach(tb => tb.setAttribute('aria-selected', String(tb.dataset.mode === m)));
-                if (App.sim) App.sim.setMode(m);
-                if (m === 'planet') {
-                    document.getElementById('hint').classList.add('gone');
-                    Picker.select(App.body, true);
-                } else if (!App.foundCount && !App.previewOn) {
-                    document.getElementById('hint').classList.remove('gone');
-                }
-            },
-            togglePlay() {
-                App.playing = !App.playing;
-                document.getElementById('ic-pause').style.display = App.playing ? 'block' : 'none';
-                document.getElementById('ic-play').style.display = App.playing ? 'none' : 'block';
-                document.getElementById('play-label').textContent = App.playing ? 'หยุด' : 'เล่นต่อ';
-                document.getElementById('btn-play').setAttribute('aria-pressed', String(App.playing));
-            },
-            frame(t) {
-                const pct = clamp01(t / T_END) * 100;
-                this.fill.style.width = pct + '%';
-                this.headDot.style.left = pct + '%';
-                let idx = 0;
-                for (let i = 0; i < STAGES.length; i++)
-                    if (t >= STAGES[i].at) idx = i;
-                if (idx === this.lastStage) return;
-                this.lastStage = idx;
-                this.notches.forEach((n, i) => {
-                    n.className = 'notch' + (i === idx ? ' now' : i < idx ? ' done' : '');
-                });
-                this.count.textContent = (idx + 1) + ' / ' + STAGES.length;
-                const root = document.documentElement;
-                root.classList.add('flip');
-                setTimeout(() => {
-                    document.getElementById('stage-title').textContent = STAGES[idx].title;
-                    document.getElementById('stage-desc').textContent = STAGES[idx].desc;
-                    root.classList.remove('flip');
-                }, 180);
-            }
+        window.VFD = {
+            freq: 50,
+            poles: 4,
+            flow: true
         };
 
-        const Picker = {
-            init() {
-                const box = this.box = document.getElementById('picker');
-                box.innerHTML = '';
-                const pad = () => {
-                    const d = document.createElement('div');
-                    d.className = 'pad';
-                    return d;
-                };
-                box.appendChild(pad());
-                this.chips = BODIES.map(b => {
-                    const el = document.createElement('button');
-                    el.className = 'pk';
-                    el.type = 'button';
-                    el.dataset.id = b.id;
-                    el.innerHTML = '<span class="orb" style="--c:' + b.c + '"></span>' + b.th;
-                    el.onclick = () => this.select(b.id, true);
-                    box.appendChild(el);
-                    return el;
-                });
-                box.appendChild(pad());
-                let idle;
-                box.addEventListener('scroll', () => {
-                    clearTimeout(idle);
-                    idle = setTimeout(() => {
-                        const mid = box.scrollLeft + box.clientWidth / 2;
-                        let best = null,
-                            bestD = Infinity;
-                        this.chips.forEach(c => {
-                            const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid);
-                            if (d < bestD) {
-                                bestD = d;
-                                best = c;
-                            }
-                        });
-                        if (best && best.dataset.id !== App.body) this.select(best.dataset.id, false);
-                    }, 110);
-                }, {
-                    passive: true
-                });
+        /* ---------- ป้ายภาษาไทยบน canvas (a-text ไม่รองรับอักษรไทย) ---------- */
+        AFRAME.registerComponent('th-label', {
+            schema: {
+                text: {
+                    default: ''
+                },
+                width: {
+                    default: 0.5
+                },
+                size: {
+                    default: 40
+                },
+                color: {
+                    default: '#e8f0f4'
+                },
+                bg: {
+                    default: 'rgba(8,14,20,0.86)'
+                },
+                accent: {
+                    default: '#4cc9f0'
+                },
+                align: {
+                    default: 'left'
+                },
+                mono: {
+                    default: false
+                }
             },
-            select(id, scrollTo) {
-                const b = BODIES.find(x => x.id === id);
-                if (!b) return;
-                App.body = id;
-                if (App.sim) App.sim.selectBody(id);
-                this.chips.forEach(c => c.setAttribute('aria-current', String(c.dataset.id === id)));
-                const root = document.documentElement;
-                root.classList.add('swap');
-                setTimeout(() => {
-                    document.getElementById('body-name').textContent = b.th;
-                    document.getElementById('body-en').textContent = b.en;
-                    document.getElementById('body-kind').textContent = b.kind;
-                    document.getElementById('body-about').textContent = b.about;
-                    document.getElementById('body-facts').innerHTML = b.facts.map(([k, v]) => '<div><dt>' + k + '</dt><dd>' + v + '</dd></div>').join('');
-                    root.classList.remove('swap');
-                }, 130);
-                if (scrollTo) {
-                    const c = this.chips.find(x => x.dataset.id === id);
-                    const left = c ? c.offsetLeft + c.offsetWidth / 2 - this.box.clientWidth / 2 : 0;
-                    try {
-                        if (this.box.scrollTo) this.box.scrollTo({
-                            left: left,
-                            behavior: 'smooth'
-                        });
-                        else this.box.scrollLeft = left;
-                    } catch (e) {
-                        this.box.scrollLeft = left;
-                    }
-                }
-            }
-        };
-
-        const Probe = {
-            on: false,
-            toggle() {
-                this.on = !this.on;
-                document.getElementById('probe').hidden = !this.on;
-                if (this.on && !this.timer) this.timer = setInterval(() => this.render(), 250);
-                if (!this.on && this.timer) {
-                    clearInterval(this.timer);
-                    this.timer = null;
-                }
+            init() {
+                this.canvas = document.createElement('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.texture = new THREE.CanvasTexture(this.canvas);
+                this.texture.minFilter = THREE.LinearFilter;
+                this.mesh = new THREE.Mesh(
+                    new THREE.PlaneGeometry(1, 1),
+                    new THREE.MeshBasicMaterial({
+                        map: this.texture,
+                        transparent: true,
+                        side: THREE.DoubleSide
+                    })
+                );
+                this.el.setObject3D('mesh', this.mesh);
                 this.render();
+                if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => this.render());
+            },
+            update() {
+                if (this.mesh) this.render();
             },
             render() {
-                const el = document.getElementById('probe');
-                if (!el || el.hidden) return;
-                const L = [];
-                const r3 = v => (Math.round(v * 100) / 100).toFixed(2);
-                try {
-                    L.push('AFRAME ' + (window.AFRAME ? AFRAME.version : '-') + '  THREE r' + (window.THREE ? THREE.REVISION : '-'));
-                    const sc = document.querySelector('a-scene');
-                    const rend = sc && sc.renderer;
-                    if (rend) {
-                        const i = rend.info.render;
-                        L.push('draw calls ' + i.calls + '  points ' + i.points + '  lines ' + i.lines + '  tri ' + i.triangles);
-                    }
-                    const sim = App.sim;
-                    if (sim) {
-                        const g = sim.group;
-                        L.push('model  visible=' + g.visible + '  kids=' + g.children.length + '  t=' + r3(sim.t));
-                        L.push('pose   ' + r3(g.position.x) + ' ' + r3(g.position.y) + ' ' + r3(g.position.z) + '  scale ' + r3(g.scale.x));
-                    }['marker', 'marker-hiro'].forEach(id => {
-                        const mk = document.getElementById(id);
-                        const an = mk && mk.components && mk.components['arjs-anchor'];
-                        L.push(id.padEnd(11) + ' visible=' + (mk && mk.object3D ? mk.object3D.visible : '-') + '  ' + (an ? (an.isReady ? 'ready' : 'ยังไม่ ready') : 'ไม่มี'));
-                    });
-                    const cv = document.querySelector('.a-canvas'),
-                        vd = document.querySelector('video');
-                    if (cv) L.push('canvas ' + cv.clientWidth + 'x' + cv.clientHeight + ' z=' + getComputedStyle(cv).zIndex);
-                    if (vd) L.push('video  ' + vd.videoWidth + 'x' + vd.videoHeight + ' z=' + getComputedStyle(vd).zIndex + ' paused=' + vd.paused);
-                    L.push('found ' + (App.foundCount || 0) + ' ครั้ง' + (App.foundAt ? '  ล่าสุด ' + r3((performance.now() - App.foundAt) / 1000) + ' วิที่แล้ว' : ''));
-                    if (App.lastError) L.push('tick error: ' + App.lastError);
-                    L.push('speed ' + App.speed + '  ' + (App.playing ? 'playing' : 'paused') + (App.previewOn ? '  preview' : ''));
-                } catch (e) {
-                    L.push('probe error: ' + e.message);
-                }
-                el.textContent = L.join('\n');
-            }
-        };
-        const Diag = {
-            show(title, html) {
-                document.getElementById('diag-title').textContent = title;
-                document.getElementById('diag-body').innerHTML = html;
-                document.getElementById('diag').classList.add('on');
-                document.getElementById('hint').classList.add('gone');
-            },
-            hide() {
-                document.getElementById('diag').classList.remove('on');
-            },
-            toggle() {
-                App.previewOn ? this.exitPreview() : this.preview();
-            },
-            exitPreview() {
-                const sim = App.sim;
-                if (!sim) return;
-                App.previewOn = false;
-                document.getElementById('sim').object3D.add(sim.group);
-                document.documentElement.classList.remove('nocam');
-                document.getElementById('hint').classList.remove('gone');
-                document.getElementById('btn-preview').textContent = 'ดูแบบไม่ใช้ marker';
-            },
-            preview() {
-                const sim = App.sim,
-                    holder = document.getElementById('preview');
-                if (!sim || !holder.object3D) {
-                    this.show('ยังโหลดโมเดลไม่สำเร็จ', 'ลองโหลดหน้าใหม่อีกครั้ง');
-                    return;
-                }
-                App.previewOn = true;
-                sim.group.position.set(0, 0, 0);
-                sim.group.quaternion.set(0, 0, 0, 1);
-                sim.group.scale.set(1, 1, 1);
-                holder.object3D.add(sim.group);
-                sim.group.visible = true;
-                if (!this.videoOK()) document.documentElement.classList.add('nocam');
-                document.getElementById('hint').classList.add('gone');
-                document.getElementById('btn-preview').textContent = 'กลับไปใช้ marker';
-                this.hide();
-            },
-            videoOK() {
-                const v = document.querySelector('video');
-                return !!(v && v.videoWidth > 0);
-            },
-            analyze() {
-                if (App.previewOn) return;
-                const sc = document.querySelector('a-scene');
-                const info = sc && sc.renderer ? sc.renderer.info.render : null;
-                const sim = App.sim;
-                const found = App.foundCount || 0;
-                const t = s => '<code>' + s + '</code>';
-                if (App.lastError) return this.show('โค้ดมี error ตอนรัน', 'ข้อความคือ ' + t(App.lastError));
-                if (!info || info.calls === 0) return this.show('ตัววาดภาพไม่ทำงาน', 'draw calls เป็น 0 ลองปิดโหมดประหยัดพลังงาน');
-                if (found === 0) return this.show('ยังจับ marker ไม่ได้', 'ลองส่องกระดาษด้าน ไม่ส่องจอ');
-                if (sim && !sim.group.visible) return this.show('เคยจับ marker ได้ แต่ตอนนี้หลุด', 'ส่องค้างไว้นิ่ง ๆ');
-            }
-        };
+                const d = this.data,
+                    S = 2,
+                    W = 620,
+                    pad = 26 * S,
+                    fs = d.size * S;
+                const family = d.mono ? '"IBM Plex Mono", monospace' :
+                    '"IBM Plex Sans Thai", "Noto Sans Thai", Tahoma, sans-serif';
+                const c = this.canvas,
+                    ctx = this.ctx;
+                c.width = W * S;
+                ctx.font = `600 ${fs}px ${family}`;
 
-        function step(fn) {
-            try {
-                fn();
-            } catch (e) {
-                console.warn('[init]', e);
+                const maxW = c.width - pad * 2,
+                    lines = [];
+                d.text.split('|').forEach(part => {
+                    let line = '';
+                    part.trim().split(' ').forEach(w => {
+                        const t = line ? line + ' ' + w : w;
+                        if (ctx.measureText(t).width > maxW && line) {
+                            lines.push(line);
+                            line = w;
+                        } else line = t;
+                    });
+                    lines.push(line);
+                });
+
+                const lh = fs * 1.42;
+                c.height = Math.round(pad * 2 + lh * lines.length);
+                ctx.clearRect(0, 0, c.width, c.height);
+                if (d.bg !== 'none') {
+                    ctx.fillStyle = d.bg;
+                    ctx.beginPath();
+                    ctx.roundRect ? ctx.roundRect(0, 0, c.width, c.height, 18 * S) : ctx.rect(0, 0, c.width, c.height);
+                    ctx.fill();
+                    ctx.fillStyle = d.accent;
+                    ctx.fillRect(0, 0, 7 * S, c.height);
+                }
+                ctx.font = `600 ${fs}px ${family}`;
+                ctx.fillStyle = d.color;
+                ctx.textBaseline = 'middle';
+                ctx.textAlign = d.align;
+                const x = d.align === 'center' ? c.width / 2 : (d.align === 'right' ? c.width - pad : pad + 6 * S);
+                lines.forEach((ln, i) => ctx.fillText(ln, x, pad + lh * (i + 0.5)));
+
+                this.texture.needsUpdate = true;
+                this.mesh.geometry.dispose();
+                this.mesh.geometry = new THREE.PlaneGeometry(d.width, d.width * (c.height / c.width));
             }
+        });
+
+        /* ---------- หันเข้าหากล้อง ---------- */
+        AFRAME.registerComponent('billboard', {
+            init() {
+                this._v = new THREE.Vector3();
+            },
+            tick() {
+                const cam = this.el.sceneEl.camera;
+                if (!cam) return;
+                cam.getWorldPosition(this._v);
+                this.el.object3D.lookAt(this._v);
+            }
+        });
+
+        /* ---------- ไฮไลต์ชิ้นส่วนที่กำลังอธิบาย ---------- */
+        AFRAME.registerComponent('glow', {
+            schema: {
+                active: {
+                    default: false
+                },
+                color: {
+                    default: '#4cc9f0'
+                }
+            },
+            init() {
+                this._c = new THREE.Color(this.data.color);
+                this._base = null;
+            },
+            tick(t) {
+                const o = this.el.object3D;
+                if (!o) return;
+                if (this._base === null) this._base = o.scale.x;
+                const on = this.data.active;
+                const k = on ? 0.30 + 0.32 * (0.5 + 0.5 * Math.sin(t / 210)) : 0;
+                o.traverse(n => {
+                    const m = n.material;
+                    if (!m || !m.emissive) return;
+                    m.emissive.set(on ? this._c : 0x000000);
+                    m.emissiveIntensity = k;
+                });
+                const s = this._base * (on ? 1 + 0.03 * (0.5 + 0.5 * Math.sin(t / 210)) : 1);
+                o.scale.set(s, s, s);
+            }
+        });
+
+        /* ---------- เส้นทางการไหล: พลังงานไฟฟ้า (ทรงกลม) และลมระบายความร้อน (ลูกศร) ---------- */
+        AFRAME.registerComponent('energy-flow', {
+            schema: {
+                path: {
+                    default: ''
+                },
+                color: {
+                    default: '#4cc9f0'
+                },
+                count: {
+                    default: 5
+                },
+                speed: {
+                    default: 0.45
+                },
+                size: {
+                    default: 0.022
+                },
+                enabled: {
+                    default: true
+                },
+                tracks: {
+                    default: 'ac'
+                },
+                shape: {
+                    default: 'sphere'
+                },
+                line: {
+                    default: true
+                }
+            },
+            init() {
+                this.pts = this.data.path.split(',').map(s => {
+                    const a = s.trim().split(/\s+/).map(Number);
+                    return new THREE.Vector3(a[0], a[1], a[2]);
+                });
+                this.seg = [];
+                this.total = 0;
+                for (let i = 0; i < this.pts.length - 1; i++) {
+                    const d = this.pts[i].distanceTo(this.pts[i + 1]);
+                    this.seg.push(d);
+                    this.total += d;
+                }
+                const s = this.data.size;
+                let geo;
+                if (this.data.shape === 'arrow') {
+                    geo = new THREE.ConeGeometry(s * 1.5, s * 3.4, 8);
+                    geo.rotateX(Math.PI / 2); // ให้ปลายกรวยชี้ไปทาง +Z
+                } else {
+                    geo = new THREE.SphereGeometry(s, 10, 10);
+                }
+                const mat = new THREE.MeshBasicMaterial({
+                    color: this.data.color,
+                    transparent: true,
+                    opacity: this.data.shape === 'arrow' ? 0.85 : 1
+                });
+                this.group = new THREE.Group();
+                this.dots = [];
+                for (let i = 0; i < this.data.count; i++) {
+                    const m = new THREE.Mesh(geo, mat);
+                    this.group.add(m);
+                    this.dots.push(m);
+                }
+                if (this.data.line) {
+                    this.group.add(new THREE.Line(
+                        new THREE.BufferGeometry().setFromPoints(this.pts),
+                        new THREE.LineBasicMaterial({
+                            color: this.data.color,
+                            transparent: true,
+                            opacity: 0.35
+                        })
+                    ));
+                }
+                this.el.setObject3D('flow', this.group);
+                this._z = new THREE.Vector3(0, 0, 1);
+            },
+            at(d) {
+                d = ((d % this.total) + this.total) % this.total;
+                for (let i = 0; i < this.seg.length; i++) {
+                    if (d <= this.seg[i]) return {
+                        p: this.pts[i].clone().lerp(this.pts[i + 1], this.seg[i] ? d / this.seg[i] : 0),
+                        i
+                    };
+                    d -= this.seg[i];
+                }
+                return {
+                    p: this.pts[this.pts.length - 1].clone(),
+                    i: this.seg.length - 1
+                };
+            },
+            tick(t) {
+                if (!this.group) return;
+                this.group.visible = this.data.enabled && VFD.flow;
+                if (!this.group.visible) return;
+                const f = this.data.tracks === 'pwm' ? Math.max(0.06, VFD.freq / 50) : 1;
+                const sp = this.data.speed * f;
+                for (let k = 0; k < this.dots.length; k++) {
+                    const r = this.at(t / 1000 * sp + k * this.total / this.dots.length);
+                    this.dots[k].position.copy(r.p);
+                    if (this.data.shape === 'arrow') {
+                        const dir = this.pts[r.i + 1].clone().sub(this.pts[r.i]).normalize();
+                        this.dots[k].quaternion.setFromUnitVectors(this._z, dir);
+                    }
+                }
+            }
+        });
+
+        /* ---------- จอรูปคลื่นจำลอง ---------- */
+        AFRAME.registerComponent('scope', {
+            schema: {
+                mode: {
+                    default: 'ac'
+                },
+                w: {
+                    default: 0.56
+                }
+            },
+            init() {
+                this.c = document.createElement('canvas');
+                this.c.width = 512;
+                this.c.height = 256;
+                this.ctx = this.c.getContext('2d');
+                this.tex = new THREE.CanvasTexture(this.c);
+                this.tex.minFilter = THREE.LinearFilter;
+                this.el.setObject3D('mesh', new THREE.Mesh(
+                    new THREE.PlaneGeometry(this.data.w, this.data.w * 0.5),
+                    new THREE.MeshBasicMaterial({
+                        map: this.tex,
+                        transparent: true
+                    })
+                ));
+                this.tick = AFRAME.utils.throttleTick(this.tick, 40, this);
+            },
+            tick(t) {
+                const ctx = this.ctx,
+                    W = 512,
+                    H = 256,
+                    mid = H / 2,
+                    A = 82,
+                    ph = t / 340;
+                ctx.clearRect(0, 0, W, H);
+                ctx.fillStyle = 'rgba(6,12,17,0.9)';
+                ctx.fillRect(0, 0, W, H);
+                ctx.strokeStyle = 'rgba(140,180,200,0.16)';
+                ctx.lineWidth = 1;
+                for (let x = 0; x <= W; x += 64) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, H);
+                    ctx.stroke();
+                }
+                for (let y = 0; y <= H; y += 42) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(W, y);
+                    ctx.stroke();
+                }
+
+                const draw = (fn, color, lw) => {
+                    ctx.beginPath();
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = lw || 3;
+                    for (let x = 0; x <= W; x++) {
+                        const y = fn(x / W);
+                        x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+                    }
+                    ctx.stroke();
+                };
+
+                if (this.data.mode === 'ac') {
+                    [
+                        ['#4cc9f0', 0],
+                        ['#7ee0a0', 2.094],
+                        ['#c9a6ff', 4.188]
+                    ].forEach(([col, off]) =>
+                        draw(u => mid - A * Math.sin(u * Math.PI * 4 + ph + off), col, 2.5));
+                } else if (this.data.mode === 'dc') {
+                    draw(u => mid - A * (0.9 + 0.055 * Math.abs(Math.sin(u * Math.PI * 12 + ph))), '#ff6b3d', 3);
+                    ctx.setLineDash([7, 7]);
+                    draw(() => mid - A * 0.93, 'rgba(255,201,74,0.75)', 2);
+                    ctx.setLineDash([]);
+                } else {
+                    const f = Math.max(0.001, VFD.freq / 50);
+                    const env = u => Math.sin(u * Math.PI * 4 * f + ph * f);
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#ffc94a';
+                    ctx.lineWidth = 1.6;
+                    let prev = mid;
+                    for (let x = 0; x <= W; x++) {
+                        const u = x / W;
+                        const y = mid - A * (Math.sin(u * Math.PI * 120) < env(u) ? 1 : -1) * 0.98;
+                        ctx.moveTo(x, prev);
+                        ctx.lineTo(x, y);
+                        prev = y;
+                    }
+                    ctx.stroke();
+                    draw(u => mid - A * 0.72 * env(u), '#4cc9f0', 3);
+                }
+                this.tex.needsUpdate = true;
+            }
+        });
+
+        /* ---------- การหมุน: เพลามอเตอร์ / ใบพัดลม ---------- */
+        AFRAME.registerComponent('spin', {
+            schema: {
+                rate: {
+                    default: 200
+                },
+                fromFreq: {
+                    default: false
+                }
+            },
+            tick(time, dt) {
+                if (!dt) return;
+                const r = this.data.fromFreq ? (VFD.freq / 50) * this.data.rate : this.data.rate;
+                this.el.object3D.rotation.y += (r * dt) / 1000 * Math.PI / 180;
+            }
+        });
+
+        /* =========================================================================
+           โมเดล VEICHI AC10 — สัดส่วนและผังภายในอ้างอิงภาพตัดขวางของผู้ผลิต
+           ตัวเครื่อง: กว้าง 0.66 สูง 1.50 ลึก 0.66 ฐานอยู่ที่ y = 0
+           ห้องซ้าย = ช่องลมอิสระ + พัดลมคู่ | กลาง = ฮีตซิงก์ | ขวา = วงจรกำลัง
+           ========================================================================= */
+        function buildModel() {
+            const M = (c, o) => `material="color:${c}; metalness:0.2; roughness:0.6${o !== undefined ? '; opacity:' + o + '; transparent:true' : ''}"`;
+            const CREAM = '#e4e0d2',
+                CREAM_D = '#cdc8b8',
+                GREEN = '#1f7a4d',
+                DARK = '#2f3438';
+
+            return `
+<a-entity id="modelRoot" scale="0.6 0.6 0.6">
+
+  <a-entity position="-0.30 2.15 0" billboard
+            th-label="text: VEICHI AC10 Series|อินเวอร์เตอร์ปรับความเร็วรอบมอเตอร์ 3 เฟส; width:1.5; size:34; accent:#ffc94a"></a-entity>
+
+  <!-- จอรูปคลื่น 3 จุดวัด -->
+  <a-entity position="-1.35 1.72 0" billboard>
+    <a-entity scope="mode: ac"></a-entity>
+    <a-entity position="0 -0.22 0" data-part="rectifier" glow
+              th-label="text: R S T • AC 50 Hz คงที่; width:0.56; size:30; accent:#4cc9f0"></a-entity>
+  </a-entity>
+  <a-entity position="-0.72 1.72 0" billboard>
+    <a-entity scope="mode: dc"></a-entity>
+    <a-entity position="0 -0.22 0" data-part="caps" glow
+              th-label="text: DC Bus ≈ 1.35 × Vin; width:0.56; size:30; accent:#ff6b3d"></a-entity>
+  </a-entity>
+  <a-entity position="-0.09 1.72 0" billboard>
+    <a-entity scope="mode: pwm"></a-entity>
+    <a-entity position="0 -0.22 0" data-part="igbt" glow
+              th-label="text: U V W • PWM ปรับได้; width:0.56; size:30; accent:#ffc94a"></a-entity>
+  </a-entity>
+
+  <!-- ====================== ตัวไดรฟ์ ====================== -->
+  <a-entity id="drive" position="-0.72 0 0">
+
+    <!-- โครงเคสสีครีมตามตัวจริง ฝาหน้าโปร่งเพื่อดูภาพตัดขวาง -->
+    <a-box id="shellFront" position="0 0.75 0.335" width="0.66" height="1.50" depth="0.015" ${M(CREAM, 0.12)}></a-box>
+    <a-box position="0 0.75 -0.335" width="0.66" height="1.50" depth="0.015" ${M(CREAM_D)}></a-box>
+    <a-box position="-0.335 0.75 0" width="0.015" height="1.50" depth="0.66" ${M(CREAM_D)}></a-box>
+    <a-box position="0.335 0.75 0"  width="0.015" height="1.50" depth="0.66" ${M(CREAM_D)}></a-box>
+    <a-box position="0 1.50 0" width="0.66" height="0.015" depth="0.66" ${M(CREAM_D)}></a-box>
+    <a-box position="0 0.00 0" width="0.66" height="0.015" depth="0.66" ${M(CREAM_D)}></a-box>
+    <a-box position="0 1.55 -0.20" width="0.62" height="0.02" depth="0.16" ${M(CREAM_D)}></a-box>
+    <a-box position="0 -0.05 -0.20" width="0.62" height="0.02" depth="0.16" ${M(CREAM_D)}></a-box>
+    ${Array.from({ length: 9 }, (_, i) =>
+                ` < a - box position = "-0.343 ${(0.42 + i * 0.065).toFixed(3)} -0.06"
+            width = "0.006"
+            height = "0.028"
+            depth = "0.30"
+            $ {
+                M('#8d9aa0')
+            } > < /a-box>`).join('')}
+
+            <!-- 1) แผงคีย์แพดและจอ 7 ส่วน -->
+            <
+            a - entity data - part = "keypad"
+            glow = "color:#57d98a"
+            data - explode = "0 0.25 0.55" >
+                <
+                a - box position = "0 1.28 0.36"
+            width = "0.52"
+            height = "0.30"
+            depth = "0.05"
+            $ {
+                M(DARK)
+            } > < /a-box> <
+            a - box position = "0 1.36 0.388"
+            width = "0.44"
+            height = "0.11"
+            depth = "0.006"
+            $ {
+                M('#0d0f11')
+            } > < /a-box> <
+            a - entity id = "kpDisplay"
+            position = "0 1.36 0.394"
+            th - label = "text: 50.00; width:0.36; size:52; mono:true; color:#ff3b30; bg:none; align:center" > < /a-entity> <
+                a - box position = "-0.155 1.245 0.388"
+            width = "0.12"
+            height = "0.05"
+            depth = "0.012"
+            $ {
+                M('#7f8b91')
+            } > < /a-box> <
+            a - box position = "-0.155 1.175 0.388"
+            width = "0.12"
+            height = "0.05"
+            depth = "0.012"
+            $ {
+                M('#7f8b91')
+            } > < /a-box> <
+            a - box position = "0.005 1.245 0.388"
+            width = "0.10"
+            height = "0.05"
+            depth = "0.012"
+            $ {
+                M('#9aa6ac')
+            } > < /a-box> <
+            a - box position = "0.005 1.175 0.388"
+            width = "0.10"
+            height = "0.05"
+            depth = "0.012"
+            $ {
+                M('#9aa6ac')
+            } > < /a-box> <
+            a - box position = "0.155 1.245 0.388"
+            width = "0.12"
+            height = "0.05"
+            depth = "0.012"
+            $ {
+                M('#17a05f')
+            } > < /a-box> <
+            a - box position = "0.155 1.175 0.388"
+            width = "0.12"
+            height = "0.05"
+            depth = "0.012"
+            $ {
+                M('#d0344a')
+            } > < /a-box> <
+            a - cylinder position = "-0.20 1.06 0.36"
+            radius = "0.038"
+            height = "0.03"
+            rotation = "90 0 0"
+            $ {
+                M('#9c8b7a')
+            } > < /a-cylinder> <
+            a - entity position = "0.05 1.06 0.35"
+            th - label = "text: VEICHI; width:0.20; size:30; color:#1f9c8f; bg:none; align:center" > < /a-entity> <
+                /a-entity>
+
+            <!-- 2) บอร์ดควบคุมและแถวขั้วสัญญาณ -->
+            <
+            a - entity data - part = "pcb"
+            glow = "color:#57d98a"
+            data - explode = "0 0.45 0.35" >
+                <
+                a - box position = "0 1.20 0.04"
+            width = "0.58"
+            height = "0.012"
+            depth = "0.44"
+            $ {
+                M(GREEN)
+            } > < /a-box> <
+            a - box position = "-0.14 1.215 0.02"
+            width = "0.11"
+            height = "0.02"
+            depth = "0.09"
+            $ {
+                M('#111111')
+            } > < /a-box> <
+            a - box position = "0.10 1.215 -0.06"
+            width = "0.07"
+            height = "0.018"
+            depth = "0.06"
+            $ {
+                M('#111111')
+            } > < /a-box> <
+            a - box position = "0 1.06 0.20"
+            width = "0.50"
+            height = "0.055"
+            depth = "0.07"
+            $ {
+                M('#2b6f4a')
+            } > < /a-box>
+            $ {
+                Array.from({
+                        length: 12
+                    }, (_, i) =>
+                    `<a-cylinder position="${(-0.225 + i * 0.041).toFixed(3)} 1.06 0.238" radius="0.013" height="0.008" rotation="90 0 0" ${M('#cfd6da')}></a-cylinder>`).join('')
+            } <
+            a - entity position = "0 0.94 0.30"
+            billboard
+            th - label = "text: ขั้วสัญญาณควบคุม • RS485; width:0.40; size:30; accent:#57d98a" > < /a-entity> <
+                /a-entity>
+
+            <!-- 3) ผนังกั้นแยกห้องลมออกจากวงจร -->
+            <
+            a - entity data - part = "partition"
+            glow = "color:#7ec8f5"
+            data - explode = "-0.45 0 0" >
+                <
+                a - box position = "-0.11 0.52 -0.08"
+            width = "0.012"
+            height = "0.92"
+            depth = "0.44"
+            $ {
+                M('#b9c3c8', 0.55)
+            } > < /a-box> <
+            /a-entity>
+
+            <!-- 4) พัดลมคู่ในช่องลมอิสระ -->
+            <
+            a - entity data - part = "fan"
+            glow = "color:#7ec8f5"
+            data - explode = "-0.55 0 0" >
+                <
+                a - cylinder position = "-0.23 0.72 -0.08"
+            radius = "0.105"
+            height = "0.05"
+            rotation = "0 0 90"
+            $ {
+                M('#3c464c')
+            } > < /a-cylinder> <
+            a - cylinder position = "-0.23 0.42 -0.08"
+            radius = "0.105"
+            height = "0.05"
+            rotation = "0 0 90"
+            $ {
+                M('#3c464c')
+            } > < /a-cylinder> <
+            a - entity position = "-0.255 0.72 -0.08"
+            rotation = "0 0 90" >
+                <
+                a - entity spin = "rate: 780" >
+                $ {
+                    [0, 72, 144, 216, 288].map(a => `<a-box rotation="0 ${a} 0" position="${(0.055 * Math.cos(a * Math.PI / 180)).toFixed(3)} 0 ${(0.055 * Math.sin(a * Math.PI / 180)).toFixed(3)}" width="0.09" height="0.006" depth="0.04" ${M('#cdd6db')}></a-box>`).join('')
+                } <
+                /a-entity> <
+                /a-entity> <
+                a - entity position = "-0.255 0.42 -0.08"
+            rotation = "0 0 90" >
+                <
+                a - entity spin = "rate: 780" >
+                $ {
+                    [0, 72, 144, 216, 288].map(a => `<a-box rotation="0 ${a} 0" position="${(0.055 * Math.cos(a * Math.PI / 180)).toFixed(3)} 0 ${(0.055 * Math.sin(a * Math.PI / 180)).toFixed(3)}" width="0.09" height="0.006" depth="0.04" ${M('#cdd6db')}></a-box>`).join('')
+                } <
+                /a-entity> <
+                /a-entity> <
+                /a-entity>
+
+            <!-- 5) ฮีตซิงก์ครีบนอน -->
+            <
+            a - entity data - part = "heatsink"
+            glow = "color:#e5533d"
+            data - explode = "0.15 0 -0.5" >
+                <
+                a - box position = "0.10 0.50 -0.12"
+            width = "0.34"
+            height = "0.80"
+            depth = "0.02"
+            $ {
+                M('#9aa5ab')
+            } > < /a-box>
+            $ {
+                Array.from({
+                        length: 11
+                    }, (_, i) =>
+                    `<a-box position="0.10 ${(0.16 + i * 0.068).toFixed(3)} -0.22" width="0.34" height="0.014" depth="0.20" ${M('#b3bdc2')}></a-box>`).join('')
+            } <
+            /a-entity>
+
+            <!-- 6) โมดูลเรียงกระแส ยึดบนฮีตซิงก์ -->
+            <
+            a - entity data - part = "rectifier"
+            glow = "color:#4cc9f0"
+            data - explode = "0.5 -0.1 0.4" >
+                <
+                a - box position = "0.10 0.34 -0.03"
+            width = "0.22"
+            height = "0.13"
+            depth = "0.13"
+            $ {
+                M('#12181d')
+            } > < /a-box> <
+            a - box position = "0.10 0.41 -0.03"
+            width = "0.18"
+            height = "0.012"
+            depth = "0.10"
+            $ {
+                M('#c0762e')
+            } > < /a-box> <
+            /a-entity>
+
+            <!-- 7) โมดูล IGBT ยึดบนฮีตซิงก์ -->
+            <
+            a - entity data - part = "igbt"
+            glow = "color:#ffc94a"
+            data - explode = "0.5 0.15 0.4" >
+                <
+                a - box position = "0.10 0.60 -0.03"
+            width = "0.24"
+            height = "0.15"
+            depth = "0.13"
+            $ {
+                M('#0f1519')
+            } > < /a-box> <
+            a - box position = "0.10 0.60 0.04"
+            width = "0.19"
+            height = "0.11"
+            depth = "0.008"
+            $ {
+                M('#c9a227')
+            } > < /a-box> <
+            /a-entity>
+
+            <!-- 8) บอร์ดกำลัง คาปาซิเตอร์ และโช้กวงแหวน -->
+            <
+            a - entity data - part = "caps"
+            glow = "color:#ff6b3d"
+            data - explode = "0.55 0.2 0.35" >
+                <
+                a - box position = "0.24 0.62 -0.05"
+            width = "0.012"
+            height = "0.62"
+            depth = "0.44"
+            $ {
+                M(GREEN)
+            } > < /a-box> <
+            a - cylinder position = "0.19 0.72 0.09"
+            radius = "0.075"
+            height = "0.28"
+            rotation = "0 0 90"
+            $ {
+                M('#22323c')
+            } > < /a-cylinder> <
+            a - cylinder position = "0.19 0.72 -0.14"
+            radius = "0.075"
+            height = "0.28"
+            rotation = "0 0 90"
+            $ {
+                M('#22323c')
+            } > < /a-cylinder> <
+            a - box position = "0.19 0.90 -0.02"
+            width = "0.16"
+            height = "0.012"
+            depth = "0.30"
+            $ {
+                M('#d0561f')
+            } > < /a-box> <
+            a - box position = "0.19 0.54 -0.02"
+            width = "0.16"
+            height = "0.012"
+            depth = "0.30"
+            $ {
+                M('#2b6cb0')
+            } > < /a-box> <
+            /a-entity> <
+            a - entity data - part = "emc"
+            glow = "color:#4cc9f0"
+            data - explode = "0.3 0.5 0.35" >
+                <
+                a - torus position = "0.05 0.95 0.10"
+            radius = "0.075"
+            radius - tubular = "0.026"
+            rotation = "0 90 0"
+            $ {
+                M('#d8b13a')
+            } > < /a-torus> <
+            a - box position = "-0.02 0.95 -0.12"
+            width = "0.16"
+            height = "0.10"
+            depth = "0.16"
+            $ {
+                M('#2c3a44')
+            } > < /a-box> <
+            /a-entity>
+
+            <!-- 9) ขั้วต่อกำลัง R S T และ U V W -->
+            <
+            a - entity data - part = "input"
+            glow = "color:#4cc9f0"
+            data - explode = "-0.35 -0.35 0.4" >
+                <
+                a - box position = "-0.13 0.14 0.20"
+            width = "0.26"
+            height = "0.10"
+            depth = "0.12"
+            $ {
+                M('#1d2830')
+            } > < /a-box>
+            $ {
+                [-0.21, -0.13, -0.05].map(x => `<a-cylinder position="${x} 0.14 0.262" radius="0.021" height="0.012" rotation="90 0 0" ${M('#cbd5da')}></a-cylinder>`).join('')
+            } <
+            a - entity position = "-0.16 -0.08 0.28"
+            billboard
+            th - label = "text: R S T • ไฟเข้า; width:0.34; size:32; accent:#4cc9f0" > < /a-entity> <
+                /a-entity> <
+                a - entity data - part = "output"
+            glow = "color:#ffc94a"
+            data - explode = "0.35 -0.35 0.4" >
+                <
+                a - box position = "0.15 0.14 0.20"
+            width = "0.26"
+            height = "0.10"
+            depth = "0.12"
+            $ {
+                M('#1d2830')
+            } > < /a-box>
+            $ {
+                [0.07, 0.15, 0.23].map(x => `<a-cylinder position="${x} 0.14 0.262" radius="0.021" height="0.012" rotation="90 0 0" ${M('#cbd5da')}></a-cylinder>`).join('')
+            } <
+            a - entity position = "0.20 -0.08 0.28"
+            billboard
+            th - label = "text: U V W • ออกสู่มอเตอร์; width:0.36; size:32; accent:#ffc94a" > < /a-entity> <
+                /a-entity>
+
+            <!-- เส้นทางไฟฟ้าภายใน -->
+            <
+            a - entity id = "flowAC"
+            energy - flow = "tracks: ac; color:#4cc9f0; count:6; speed:0.5;
+            path: -0.13 0.09 0.26, -0.02 0.95 0.02, 0.10 0.34 0.06 "></a-entity> <
+                a - entity id = "flowDC"
+            energy - flow = "tracks: dc; color:#ff6b3d; count:6; speed:0.6;
+            path: 0.10 0.34 0.06, 0.19 0.54 0.02, 0.19 0.86 0.02, 0.19 0.60 0.06, 0.10 0.60 0.08 "></a-entity>
+
+            <!-- ทิศทางลม: เข้าด้านหลังขวา ผ่านครีบ ออกทางซ้าย -->
+            <
+            a - entity id = "flowAirIn"
+            energy - flow = "tracks: air; shape: arrow; line: false; color:#7ec8f5;
+            count: 4;
+            speed: 0.42;
+            size: 0.026;
+            path: 0.52 0.20 - 0.22, 0.12 0.22 - 0.22, 0.10 0.60 - 0.22 "></a-entity> <
+                a - entity id = "flowAirOut"
+            energy - flow = "tracks: air; shape: arrow; line: false; color:#7ec8f5;
+            count: 4;
+            speed: 0.42;
+            size: 0.026;
+            path: 0.10 0.72 - 0.22, -0.23 0.72 - 0.10, -0.60 0.80 - 0.05 "></a-entity> <
+                /a-entity>
+
+            <!-- ====================== มอเตอร์เหนี่ยวนำ ====================== -->
+            <
+            a - entity id = "motorGroup"
+            position = "0.95 0.38 0"
+            data - part = "motor"
+            glow = "color:#ffc94a" >
+                <
+                a - cylinder rotation = "0 0 90"
+            radius = "0.28"
+            height = "0.56"
+            $ {
+                M('#2f5d78')
+            } > < /a-cylinder> <
+            a - cylinder position = "-0.30 0 0"
+            rotation = "0 0 90"
+            radius = "0.29"
+            height = "0.05"
+            $ {
+                M('#24485c')
+            } > < /a-cylinder> <
+            a - cylinder position = "0.30 0 0"
+            rotation = "0 0 90"
+            radius = "0.29"
+            height = "0.05"
+            $ {
+                M('#24485c')
+            } > < /a-cylinder> <
+            a - box position = "0 0.30 0"
+            width = "0.22"
+            height = "0.10"
+            depth = "0.18"
+            $ {
+                M('#1d2830')
+            } > < /a-box> <
+            a - box position = "0 -0.30 0"
+            width = "0.54"
+            height = "0.06"
+            depth = "0.36"
+            $ {
+                M('#3b4a52')
+            } > < /a-box> <
+            a - entity rotation = "0 0 90" >
+                <
+                a - entity spin = "rate: 420; fromFreq: true" >
+                <
+                a - cylinder position = "0 0.38 0"
+            radius = "0.055"
+            height = "0.26"
+            $ {
+                M('#c8d2d8')
+            } > < /a-cylinder> <
+            a - box position = "0 0.26 0"
+            width = "0.32"
+            height = "0.012"
+            depth = "0.05"
+            $ {
+                M('#e0e7ea')
+            } > < /a-box> <
+            a - box position = "0 0.26 0"
+            rotation = "0 90 0"
+            width = "0.32"
+            height = "0.012"
+            depth = "0.05"
+            $ {
+                M('#e0e7ea')
+            } > < /a-box> <
+            /a-entity> <
+            /a-entity> <
+            a - entity id = "motorLabel"
+            position = "0 -0.56 0"
+            billboard
+            th - label = "text: มอเตอร์เหนี่ยวนำ 3 เฟส 4 ขั้ว|1500 rpm; width:0.54; size:30; accent:#ffc94a" > < /a-entity> <
+                /a-entity>
+
+            <
+            a - entity id = "flowPWM"
+            energy - flow = "tracks: pwm; color:#ffc94a; count:7; speed:0.7;
+            path: -0.62 0.60 0.05, -0.57 0.14 0.26, -0.25 0.06 0.20, 0.35 0.24 0.08, 0.72 0.38 0.02 "></a-entity>
+
+            <
+            a - entity id = "stepPlate"
+            position = "0 0.01 1.25"
+            rotation = "-90 0 0"
+            th - label = "text: —; width:2.4; size:36; accent:#ffc94a" > < /a-entity> <
+                /a-entity>`;
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            step(() => {
-                if (!/[?&]debug=1/.test(location.search)) return;
-                document.querySelector('a-scene').setAttribute('arjs', 'debugUIEnabled', true);
-                Probe.toggle();
-            });
-            const watchdog = setTimeout(() => {
-                if (App.previewOn) return;
-                if (!window.AFRAME) Diag.show('โหลดไลบรารีไม่สำเร็จ', 'ลองต่อเน็ตแล้วโหลดหน้าใหม่');
-                else if (!App.sim) Diag.show('สร้างโมเดล 3D ไม่สำเร็จ', 'เครื่องอาจไม่รองรับ WebGL');
-                else if (!Diag.videoOK()) Diag.show('ยังไม่ได้ภาพจากกล้อง', 'ลองเปิด ตั้งค่า > Safari > กล้อง เป็นอนุญาต');
-            }, 9000);
-            setTimeout(() => step(() => Diag.analyze()), 12000);
-            const noMarker = setTimeout(() => {
-                if (App.previewOn || App.foundCount) return;
-                if (!App.sim || !Diag.videoOK()) return;
-                Diag.show('ยังจับ marker ไม่ได้', 'ให้กรอบดำของ marker อยู่ในเฟรมทั้งสี่ด้าน หรือลองใช้ marker Hiro');
-            }, 16000);
+        /* ---------- เนื้อหาบทเรียน ---------- */
+        const STEPS = [{
+                t: 'ภาพรวมการทำงาน',
+                d: 'AC10 รับไฟ AC ความถี่คงที่จากสายเมน แปลงเป็นไฟ DC แล้วสร้างไฟ AC ขึ้นใหม่ที่ปรับแรงดันและความถี่ได้ เพื่อควบคุมความเร็วรอบมอเตอร์เหนี่ยวนำ',
+                s: 'เส้นทางพลังงาน: R S T → เรียงกระแส → บัส DC → IGBT → U V W → มอเตอร์',
+                p: [],
+                f: {
+                    ac: 1,
+                    dc: 1,
+                    pwm: 1
+                }
+            },
 
-            step(() => HUD.init());
-            step(() => {
-                const hint = document.getElementById('hint');
-                ['marker', 'marker-hiro'].forEach(id => {
-                    const marker = document.getElementById(id);
-                    if (!marker) return;
-                    if (marker.object3D) marker.object3D.visible = false;
-                    marker.addEventListener('markerFound', () => {
-                        App.foundCount = (App.foundCount || 0) + 1;
-                        App.foundAt = performance.now();
-                        clearTimeout(watchdog);
-                        clearTimeout(noMarker);
-                        Diag.hide();
-                        if (!App.previewOn) hint.classList.add('gone');
-                    });
-                    marker.addEventListener('markerLost', () => {
-                        if (!App.previewOn) hint.classList.remove('gone');
+            {
+                t: 'ไฟเข้าและตัวกรองสัญญาณรบกวน',
+                d: 'ไฟจ่ายเข้าที่ขั้ว R S T ด้านล่างของตัวเครื่อง ผ่านโช้กวงแหวนและตัวกรอง EMC เพื่อลดสัญญาณรบกวนที่จะย้อนกลับเข้าสายเมน',
+                s: 'AC10 มีทั้งรุ่นไฟเข้า 1 เฟส 220 V และ 3 เฟส 380 V ต้องดูพิกัดจากป้ายเนมเพลตก่อนต่อไฟทุกครั้ง',
+                p: ['input', 'emc'],
+                f: {
+                    ac: 1
+                }
+            },
+
+            {
+                t: 'วงจรเรียงกระแส แปลง AC เป็น DC',
+                d: 'ไดโอดบริดจ์ที่ยึดอยู่บนฮีตซิงก์เรียงไฟสลับให้เป็นไฟตรงแบบมีระลอกคลื่น แรงดันบัส DC ที่ได้ประมาณ 1.35 เท่าของแรงดันไฟเข้า',
+                s: 'ไฟเข้า 380 V จะได้บัส DC ราว 513 V ดูจอด้านซ้าย: ไซน์สามเฟสกลายเป็นไฟตรง 6 พัลส์',
+                p: ['rectifier'],
+                f: {
+                    ac: 1
+                }
+            },
+
+            {
+                t: 'บัส DC และคาปาซิเตอร์',
+                d: 'คาปาซิเตอร์อิเล็กโทรไลติกบนบอร์ดกำลังกรองระลอกคลื่นให้ไฟตรงเรียบและเก็บพลังงานสำรอง มีวงจรพรีชาร์จจำกัดกระแสพุ่งตอนเปิดเครื่อง',
+                s: 'อันตราย: คาปาซิเตอร์ยังเก็บประจุหลังตัดไฟ ต้องรออย่างน้อย 5 นาทีและวัดแรงดันให้เป็นศูนย์ก่อนสัมผัส',
+                p: ['caps'],
+                f: {
+                    dc: 1
+                }
+            },
+
+            {
+                t: 'อินเวอร์เตอร์ IGBT สร้างไฟ AC ใหม่',
+                d: 'IGBT หกตัวสลับต่อขั้วบวกและลบของบัส DC เข้ากับสาย U V W ด้วยเทคนิค PWM ความกว้างพัลส์ที่เปลี่ยนไปทำให้กระแสในขดลวดมอเตอร์มีรูปคลื่นใกล้เคียงไซน์',
+                s: 'ความถี่สวิตชิ่งปรับได้ราว 2–16 kHz ตั้งสูงมอเตอร์เงียบขึ้นแต่ IGBT ร้อนขึ้น',
+                p: ['igbt'],
+                f: {
+                    dc: 1,
+                    pwm: 1
+                }
+            },
+
+            {
+                t: 'บอร์ดควบคุมและคีย์แพด',
+                d: 'ไมโครคอนโทรลเลอร์คำนวณจังหวะจุดชนวน IGBT ตามรูปแบบ V/f คือเพิ่มความถี่พร้อมเพิ่มแรงดันตามสัดส่วนเพื่อรักษาแรงบิด พร้อมป้องกันกระแสเกิน แรงดันเกิน และความร้อนเกิน',
+                s: 'สั่งงานได้จากปุ่ม RUN/STOP และปุ่มหมุนหน้าเครื่อง ขั้วสัญญาณดิจิทัลและอนาล็อก หรือผ่าน Modbus RTU บน RS485',
+                p: ['pcb', 'keypad'],
+                f: {}
+            },
+
+            {
+                t: 'เอาต์พุตสู่มอเตอร์',
+                d: 'ไฟ PWM ออกที่ขั้ว U V W ความเร็วรอบซิงโครนัสคำนวณจาก n = 120 × f ÷ จำนวนขั้ว ลองเลื่อนแถบความถี่แล้วดูเพลามอเตอร์ ตัวเลขบนจอ และรูปคลื่นเปลี่ยนตามกัน',
+                s: 'มอเตอร์ 4 ขั้วที่ 50 Hz ได้ 1500 rpm ที่ 25 Hz เหลือ 750 rpm (ความเร็วเพลาในภาพลดสเกลลงให้ตามองทัน)',
+                p: ['output', 'motor'],
+                f: {
+                    pwm: 1
+                }
+            },
+
+            {
+                t: 'ช่องลมอิสระและการระบายความร้อน',
+                d: 'ผนังกั้นแยกห้องลมออกจากห้องวงจร อากาศเย็นถูกดูดเข้าด้านหลัง ผ่านครีบฮีตซิงก์ที่รับความร้อนจากไดโอดและ IGBT แล้วพัดลมคู่เป่าออก โดยฝุ่นไม่ผ่านเข้าไปเกาะแผงวงจร',
+                s: 'ตัวเครื่องเป็น IP20 สำหรับติดตั้งในตู้คอนโทรล ต้องเว้นระยะรอบตัวเครื่องตามคู่มือ และลดโหลดเมื่ออุณหภูมิรอบข้างสูงเกินพิกัด',
+                p: ['heatsink', 'fan', 'partition'],
+                f: {
+                    air: 1
+                }
+            }
+        ];
+
+        /* ---------- ตรรกะควบคุม ---------- */
+        (function() {
+            const $ = s => document.querySelector(s);
+            let step = 0,
+                autoplay = true,
+                timer = null,
+                exploded = false,
+                cutaway = true,
+                mounted = 'marker';
+
+            function mount(where) {
+                const marker = $('#markerRoot'),
+                    preview = $('#previewRoot');
+                marker.innerHTML = '';
+                preview.innerHTML = '';
+                (where === 'marker' ? marker : preview).innerHTML = buildModel();
+                mounted = where;
+                setTimeout(() => {
+                    applyStep();
+                    applySize(+$('#size').value);
+                    applyCutaway();
+                    applyExplode();
+                    applyFreq();
+                }, 130);
+            }
+
+            const track = $('#track');
+            STEPS.forEach(() => track.appendChild(document.createElement('i')));
+
+            function applyStep() {
+                const st = STEPS[step];
+                $('#stepno').textContent = String(step).padStart(2, '0');
+                $('#steptitle').textContent = st.t;
+                $('#stepdesc').textContent = st.d;
+                $('#stepspec').textContent = st.s || '';
+                [...track.children].forEach((el, i) => el.classList.toggle('on', i <= step));
+
+                const plate = $('#stepPlate');
+                if (plate) plate.setAttribute('th-label', 'text', `${step === 0 ? '' : step + ') '}${st.t}|${st.d}`);
+
+                document.querySelectorAll('[data-part]').forEach(el => {
+                    if (el.components && el.components.glow) el.setAttribute('glow', 'active', st.p.includes(el.dataset.part));
+                });
+
+                const f = st.f || {};
+                const setFlow = (id, on) => {
+                    const e = $(id);
+                    if (e) e.setAttribute('energy-flow', 'enabled', !!on);
+                };
+                setFlow('#flowAC', f.ac);
+                setFlow('#flowDC', f.dc);
+                setFlow('#flowPWM', f.pwm);
+                setFlow('#flowAirIn', f.air);
+                setFlow('#flowAirOut', f.air);
+            }
+
+            function go(n) {
+                step = (n + STEPS.length) % STEPS.length;
+                applyStep();
+            }
+
+            function setAutoplay(on) {
+                autoplay = on;
+                $('#play').classList.toggle('on', on);
+                $('#play').textContent = on ? 'หยุดเล่นอัตโนมัติ' : 'เล่นอัตโนมัติ';
+                clearInterval(timer);
+                if (on) timer = setInterval(() => go(step + 1), 8000);
+            }
+
+            $('#next').onclick = () => {
+                setAutoplay(false);
+                go(step + 1);
+            };
+            $('#prev').onclick = () => {
+                setAutoplay(false);
+                go(step - 1);
+            };
+            $('#play').onclick = () => setAutoplay(!autoplay);
+            $('#btnMore').onclick = () => {
+                $('#more').classList.toggle('show');
+                $('#btnMore').classList.toggle('on');
+            };
+            $('#btnFlow').onclick = () => {
+                VFD.flow = !VFD.flow;
+                $('#btnFlow').classList.toggle('on', VFD.flow);
+            };
+
+            function applyCutaway() {
+                const s = $('#shellFront');
+                if (s) s.setAttribute('material', 'opacity', cutaway ? 0.1 : 0.95);
+            }
+            $('#btnCut').onclick = () => {
+                cutaway = !cutaway;
+                $('#btnCut').classList.toggle('on', cutaway);
+                $('#btnCut').textContent = cutaway ? 'เปิดฝาดูภายใน' : 'ปิดฝาเครื่อง';
+                applyCutaway();
+            };
+
+            function applyExplode() {
+                document.querySelectorAll('[data-explode]').forEach(el => {
+                    if (!el.dataset.base) {
+                        const p = el.getAttribute('position') || {
+                            x: 0,
+                            y: 0,
+                            z: 0
+                        };
+                        el.dataset.base = `${p.x} ${p.y} ${p.z}`;
+                    }
+                    const b = el.dataset.base.split(' ').map(Number);
+                    const o = el.dataset.explode.split(' ').map(Number);
+                    const to = exploded ? `${b[0] + o[0]} ${b[1] + o[1]} ${b[2] + o[2]}` : el.dataset.base;
+                    el.setAttribute('animation__ex', {
+                        property: 'position',
+                        to,
+                        dur: 650,
+                        easing: 'easeOutCubic'
                     });
                 });
+            }
+            $('#btnExp').onclick = () => {
+                exploded = !exploded;
+                $('#btnExp').classList.toggle('on', exploded);
+                applyExplode();
+            };
+
+            function applyFreq() {
+                const f = VFD.freq;
+                $('#freqval').textContent = f.toFixed(2) + ' Hz';
+                const kp = $('#kpDisplay');
+                if (kp) kp.setAttribute('th-label', 'text', f.toFixed(2));
+                const ml = $('#motorLabel');
+                if (ml) ml.setAttribute('th-label', 'text',
+                    `มอเตอร์เหนี่ยวนำ 3 เฟส 4 ขั้ว|${Math.round(120 * f / VFD.poles)} rpm`);
+            }
+            $('#freq').addEventListener('input', e => {
+                VFD.freq = +e.target.value;
+                applyFreq();
             });
-            step(() => {
-                if (/\bLine\/|FBAN|FBAV|Instagram|MicroMessenger/i.test(navigator.userAgent)) Diag.show('เปิดในเบราว์เซอร์ปกติก่อน', 'แอปแชทมักไม่อนุญาตให้ใช้กล้อง');
+
+            function applySize(v) {
+                const m = $('#modelRoot');
+                if (m) m.setAttribute('scale', `${v} ${v} ${v}`);
+                $('#sizeval').textContent = (+v).toFixed(2) + '×';
+            }
+            $('#size').addEventListener('input', e => applySize(+e.target.value));
+
+            $('#btnPreview').onclick = () => {
+                const to = mounted === 'marker' ? 'preview' : 'marker';
+                mount(to);
+                $('#btnPreview').textContent = to === 'preview' ? 'กลับไปใช้ marker' : 'โหมดไม่ใช้ marker';
+                setStatus(to === 'preview' ? 'preview' : 'searching');
+            };
+
+            function setStatus(mode) {
+                $('#status').classList.toggle('found', mode === 'found' || mode === 'preview');
+                $('#statustext').textContent = mode === 'found' ? 'พบ marker แล้ว' :
+                    mode === 'preview' ? 'โหมดไม่ใช้ marker' : 'ค้นหา marker';
+            }
+
+            const marker = $('#markerRoot');
+            marker.addEventListener('markerFound', () => {
+                if (mounted === 'marker') setStatus('found');
             });
-            step(() => {
-                if (window.isSecureContext === false) Diag.show('ต้องเปิดผ่าน https', 'เบราว์เซอร์จะให้ใช้กล้องเฉพาะเมื่อเปิดผ่าน <code>https://</code> หรือ <code>localhost</code>');
+            marker.addEventListener('markerLost', () => {
+                if (mounted === 'marker') setStatus('searching');
             });
-            step(() => {
-                if (typeof fetch !== 'function') return;
-                ['marker.patt', 'pattern-hiro.patt', 'camera_para.dat'].forEach(f => {
-                    fetch(f).then(r => {
-                        if (!r.ok) throw 0;
-                    }).catch(() => Diag.show('ไม่พบไฟล์ ' + f, 'อัปโหลดไฟล์ <code>' + f + '</code> ไว้โฟลเดอร์เดียวกับ <code>index.html</code>'));
-                });
+
+            const scene = document.querySelector('a-scene');
+            const start = () => {
+                $('#loader').style.display = 'none';
+                mount('marker');
+                setAutoplay(true);
+            };
+            scene.hasLoaded ? start() : scene.addEventListener('loaded', start);
+
+            window.addEventListener('camera-error', () => {
+                $('#loader').style.display = 'flex';
+                $('#loader').textContent = 'เปิดกล้องไม่สำเร็จ ตรวจสอบว่าเปิดผ่าน https และอนุญาตสิทธิ์กล้องแล้ว';
             });
-        });
+        })();
     </script>
 </body>
 
