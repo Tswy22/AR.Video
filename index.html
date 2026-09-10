@@ -40,30 +40,29 @@
             margin: 0;
             height: 100%;
             overflow: hidden;
-            background: transparent;
+            background: #05080d;
             font-family: "IBM Plex Sans Thai", sans-serif;
             color: var(--text);
             -webkit-font-smoothing: antialiased;
         }
 
-        /* ให้ภาพจากกล้องแสดงเต็มจอและอยู่หลังฉาก 3 มิติ */
-        video#arjs-video,
-        .a-canvas~video,
-        video.arjs-video {
+        /* ภาพจากกล้องอยู่ชั้น 0 (เหนือพื้นหลัง) ฉาก 3 มิติอยู่ชั้น 1 UI อยู่ชั้น 20 ขึ้นไป
+           หลีกเลี่ยง z-index ติดลบ เพราะจะจมอยู่ใต้พื้นหลังของหน้าเว็บ */
+        video {
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
             width: 100% !important;
             height: 100% !important;
             object-fit: cover !important;
-            z-index: -1 !important;
+            z-index: 0 !important;
             display: block !important;
         }
 
         a-scene {
             position: fixed;
             inset: 0;
-            z-index: 0;
+            z-index: 1;
             background: transparent;
         }
 
@@ -1151,8 +1150,25 @@
             }
             requestAnimationFrame(loop);
 
+            /* ย้ายวิดีโอกล้องขึ้นมาเป็นลูกตัวแรกของ body และตรึงสไตล์ด้วย JS
+               เพราะ AR.js ตั้งชื่อ element ไม่แน่นอนในแต่ละเวอร์ชัน */
+            let videoTries = 0;
+            function fixVideo() {
+                const v = document.querySelector('video');
+                if (v) {
+                    Object.assign(v.style, {
+                        position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
+                        objectFit: 'cover', zIndex: '0', display: 'block', opacity: '1', visibility: 'visible'
+                    });
+                    if (document.body.firstChild !== v) document.body.insertBefore(v, document.body.firstChild);
+                    return;
+                }
+                if (++videoTries < 40) setTimeout(fixVideo, 250);   // ลองซ้ำได้ราว 10 วินาที
+            }
+            fixVideo();
+
             const scene = document.querySelector('a-scene'); let started = false;
-            function start() { if (started) return; started = true; $('#loader').style.display = 'none'; mount('marker'); setAutoplay(true); }
+            function start() { if (started) return; started = true; $('#loader').style.display = 'none'; mount('marker'); setAutoplay(true); fixVideo(); }
             if (scene.hasLoaded) start();
             scene.addEventListener('loaded', start);
             scene.addEventListener('renderstart', start);
