@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <title>AR • VEICHI AC10 Series Variable Frequency Drive</title>
+    <title>AR • VEICHI AC10 Series VFD (Vertical)</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,16 +18,19 @@
 
     <style>
         :root {
-            --panel: rgba(18, 24, 32, 0.75);
-            --line: rgba(255, 255, 255, 0.15);
+            /* โทนสี Sci-Fi / Modern Industrial */
+            --panel: rgba(15, 23, 42, 0.85);
+            --line: rgba(255, 255, 255, 0.12);
             --text: #f8fafc;
             --muted: #94a3b8;
-            --ac: #38bdf8;
+            --ac: #0ea5e9;
             --dc: #f97316;
             --pwm: #eab308;
-            --air: #7dd3fc;
+            --air: #38bdf8;
             --ok: #10b981;
             --bad: #ef4444;
+            --rad-lg: 20px;
+            --rad-md: 14px;
         }
 
         * {
@@ -40,55 +43,36 @@
             margin: 0;
             height: 100%;
             overflow: hidden;
-            background: #05080d;
+            background: #050505;
             font-family: "IBM Plex Sans Thai", sans-serif;
             color: var(--text);
             -webkit-font-smoothing: antialiased;
         }
 
-        /* ภาพจากกล้องอยู่ชั้น 0 (เหนือพื้นหลัง) ฉาก 3 มิติอยู่ชั้น 1 UI อยู่ชั้น 20 ขึ้นไป
-           หลีกเลี่ยง z-index ติดลบ เพราะจะจมอยู่ใต้พื้นหลังของหน้าเว็บ */
-        video {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: cover !important;
-            z-index: 0 !important;
-            display: block !important;
-        }
-
         a-scene {
             position: fixed;
             inset: 0;
-            z-index: 1;
-            background: transparent;
+            z-index: 0;
         }
 
-        .a-canvas {
-            background: transparent !important;
-        }
-
+        /* Loader */
         .arjs-loader {
             position: fixed;
             inset: 0;
+            z-index: 999;
+            background: #020617;
+            color: var(--muted);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 16px;
-            background: #0f172a;
-            z-index: 999;
-            color: var(--muted);
-            font-size: 15px;
-            font-weight: 500;
+            gap: 20px;
         }
 
         .spinner {
-            width: 36px;
-            height: 36px;
-            border: 3px solid rgba(255, 255, 255, 0.1);
+            width: 44px;
+            height: 44px;
+            border: 3px solid rgba(255, 255, 255, 0.05);
             border-top-color: var(--ac);
             border-radius: 50%;
             animation: spin 1s linear infinite;
@@ -100,16 +84,17 @@
             }
         }
 
+        /* Glassmorphism Effect */
         .glass {
             background: var(--panel);
             border: 1px solid var(--line);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         }
 
-        /* ---------------- HUD ---------------- */
-        #hud {
+        /* ---------------- HUD บน ---------------- */
+        #hud-top {
             position: fixed;
             top: 0;
             left: 0;
@@ -123,29 +108,31 @@
             gap: 10px;
         }
 
-        .badge {
-            padding: 12px 16px;
-            border-radius: 16px;
+        .title-card {
+            padding: 12px 18px;
+            border-radius: var(--rad-lg);
             pointer-events: auto;
         }
 
-        .badge h1 {
+        .title-card h1 {
             margin: 0;
             font-size: 16px;
             font-weight: 700;
-            color: #fff;
-            letter-spacing: 0.2px;
+            background: linear-gradient(90deg, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .badge p {
+        .title-card p {
             margin: 4px 0 0;
             font-size: 11px;
             color: var(--muted);
+            font-weight: 500;
         }
 
-        #status-pill {
-            padding: 8px 12px;
-            border-radius: 20px;
+        .status-pill {
+            padding: 8px 14px;
+            border-radius: 30px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -155,39 +142,40 @@
             flex: none;
         }
 
-        #dot {
+        .dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
             background: var(--dc);
             box-shadow: 0 0 8px var(--dc);
-            transition: .3s;
+            transition: 0.3s;
         }
 
-        .found #dot {
+        .found .dot {
             background: var(--ok);
-            box-shadow: 0 0 8px var(--ok);
+            box-shadow: 0 0 10px var(--ok);
         }
 
-        /* ---------------- Live meter ---------------- */
+        /* ---------------- Live Meter (ขวาบน) ---------------- */
         #meter {
             position: fixed;
             right: 16px;
             top: calc(96px + env(safe-area-inset-top, 0px));
             z-index: 20;
-            padding: 14px 16px;
+            padding: 16px;
             text-align: right;
             min-width: 140px;
-            border-radius: 16px;
+            border-radius: var(--rad-lg);
             border-right: 4px solid var(--pwm);
         }
 
         #meter .big {
             font-family: "IBM Plex Mono", monospace;
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 700;
             color: #fff;
             line-height: 1;
+            letter-spacing: -1px;
         }
 
         #meter .big small {
@@ -195,13 +183,14 @@
             color: var(--muted);
             font-family: "IBM Plex Sans Thai";
             margin-left: 4px;
+            font-weight: 500;
         }
 
         #meter .sub {
             font-family: "IBM Plex Mono", monospace;
             font-size: 12px;
             color: var(--pwm);
-            margin-top: 6px;
+            margin-top: 8px;
             font-weight: 600;
         }
 
@@ -211,7 +200,8 @@
 
         #meter.fault .big {
             color: var(--bad);
-            animation: blink 1s infinite alternate;
+            animation: blink 1.2s infinite alternate;
+            text-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
         }
 
         @keyframes blink {
@@ -220,97 +210,80 @@
             }
 
             to {
-                opacity: .4;
+                opacity: 0.5;
             }
         }
 
-        #heatbar {
+        .heatbar {
             height: 4px;
             border-radius: 2px;
-            background: rgba(255, 255, 255, .1);
-            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            margin-top: 12px;
             overflow: hidden;
         }
 
-        #heatfill {
+        .heatfill {
             height: 100%;
             width: 0%;
             background: linear-gradient(90deg, var(--ac), var(--pwm), var(--bad));
-            transition: width .3s;
+            transition: width 0.3s;
         }
 
-        /* ---------------- Toast แจ้งความผิดพลาด ---------------- */
-        #faultbar {
+        /* ---------------- แจ้งเตือน Error (ลอยจากด้านบน) ---------------- */
+        #toast-error {
             position: fixed;
-            top: calc(16px + env(safe-area-inset-top, 0px));
+            top: calc(20px + env(safe-area-inset-top, 0px));
             left: 16px;
             right: 16px;
             z-index: 50;
-            max-width: 440px;
+            max-width: 420px;
             margin: 0 auto;
-            padding: 16px;
-            border-radius: 16px;
-            background: rgba(150, 20, 20, .95);
-            border: 1px solid #f87171;
-            box-shadow: 0 12px 32px rgba(220, 20, 20, .4);
-            transform: translateY(-160%);
-            transition: .4s cubic-bezier(.2, .8, .2, 1);
+            padding: 18px;
+            border-radius: var(--rad-lg);
             pointer-events: none;
+            background: rgba(127, 29, 29, 0.95);
+            border: 1px solid #f87171;
+            box-shadow: 0 16px 40px rgba(185, 28, 28, 0.4);
+            transform: translateY(-150%);
+            transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
             backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
         }
 
-        #faultbar.show {
+        #toast-error.show {
             transform: translateY(0);
             pointer-events: auto;
         }
 
-        .fault-head {
+        .toast-head {
             display: flex;
             align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 8px;
         }
 
-        .fault-head b {
+        .toast-head b {
             font-family: "IBM Plex Mono";
             font-size: 14px;
-            color: #b91c1c;
-            background: #fff;
-            padding: 3px 9px;
+            color: #991b1b;
+            background: #fca5a5;
+            padding: 4px 8px;
             border-radius: 6px;
         }
 
-        .fault-head span {
-            font-weight: 600;
+        .toast-head span {
+            font-weight: 700;
             color: #fff;
-            font-size: 15px;
+            font-size: 16px;
         }
 
-        .fault-body {
+        .toast-body {
             font-size: 13px;
             line-height: 1.6;
             color: #fecaca;
-            margin-top: 10px;
+            margin-bottom: 14px;
         }
 
-        #btnToastReset {
-            margin-top: 12px;
-            width: 100%;
-            padding: 10px;
-            background: rgba(0, 0, 0, .3);
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, .3);
-            border-radius: 10px;
-            font-weight: 600;
-        }
-
-        #btnToastReset:active {
-            background: rgba(0, 0, 0, .5);
-            transform: scale(.98);
-        }
-
-        /* ---------------- Bottom sheet ---------------- */
+        /* ---------------- Bottom Sheet (แผงควบคุมหลัก) ---------------- */
         #dock {
             position: fixed;
             bottom: 0;
@@ -324,50 +297,54 @@
             align-items: center;
         }
 
-        .card {
+        .dock-card {
             width: 100%;
             max-width: 600px;
-            padding: 16px 20px;
-            border-radius: 24px;
+            padding: 20px;
+            border-radius: 28px;
             pointer-events: auto;
-            transition: .3s cubic-bezier(.25, .8, .25, 1);
+            transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
         .drag-handle {
             width: 44px;
             height: 5px;
-            background: rgba(255, 255, 255, .25);
+            background: rgba(255, 255, 255, 0.25);
             border-radius: 3px;
-            margin: 0 auto 14px;
+            margin: 0 auto 16px;
             cursor: pointer;
         }
 
-        .stepline {
+        .step-header {
             display: flex;
             align-items: flex-start;
-            gap: 12px;
+            gap: 14px;
         }
 
-        .stepno {
-            background: rgba(56, 189, 248, .15);
+        .step-num {
+            background: rgba(14, 165, 233, 0.15);
             color: var(--ac);
-            border: 1px solid rgba(56, 189, 248, .3);
-            padding: 4px 10px;
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            padding: 6px 12px;
             border-radius: 8px;
             font-family: "IBM Plex Mono";
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 700;
             flex: none;
         }
 
-        .steptitle {
+        .step-info {
+            flex: 1;
+        }
+
+        .step-info h2 {
             margin: 0;
-            font-size: 16px;
+            font-size: 17px;
             font-weight: 600;
             line-height: 1.4;
         }
 
-        #stepdesc {
+        .step-info p#step-desc {
             margin: 8px 0 0;
             font-size: 13.5px;
             line-height: 1.6;
@@ -375,132 +352,174 @@
             font-weight: 300;
         }
 
-        #stepspec {
+        .step-info p#step-spec {
             margin: 8px 0 0;
             font-size: 12px;
             line-height: 1.5;
             color: var(--muted);
-            border-left: 2px solid var(--line);
+            border-left: 2px solid var(--ac);
             padding-left: 10px;
+        }
+
+        #btnFold {
+            background: transparent;
+            border: none;
+            padding: 0;
+            color: var(--muted);
+            width: 36px;
+            height: 36px;
+            flex: none;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        #btnFold:active {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
         }
 
         .track {
             display: flex;
             gap: 4px;
-            margin: 16px 0;
+            margin: 20px 0;
         }
 
         .track i {
             height: 4px;
             flex: 1;
-            background: rgba(255, 255, 255, .1);
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 2px;
-            transition: .3s;
+            transition: 0.3s;
         }
 
         .track i.on {
             background: var(--ac);
-            box-shadow: 0 0 8px rgba(56, 189, 248, .5);
+            box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
         }
 
-        .card.folded #stepdesc {
+        /* การพับหน้าจอ */
+        .dock-card.folded #step-desc {
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            opacity: .8;
-        }
-
-        .card.folded #stepspec {
-            display: none;
-        }
-
-        .card.folded #panelBody {
-            display: none;
-        }
-
-        .card.folded .track {
+            opacity: 0.8;
             margin-bottom: 0;
         }
 
-        .btn-grid {
+        .dock-card.folded #step-spec,
+        .dock-card.folded .dock-body {
+            display: none;
+        }
+
+        .dock-card.folded .track {
+            margin-bottom: 0;
+        }
+
+        .dock-card.folded #btnFold {
+            transform: rotate(180deg);
+        }
+
+        /* ปุ่มกด (Buttons) */
+        .grid-3 {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-top: 12px;
+            gap: 10px;
+            margin-bottom: 12px;
         }
 
-        .btn-grid.cols-2 {
+        .grid-2 {
+            display: grid;
             grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
         }
 
-        button {
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .btn {
             font-family: inherit;
             font-size: 13px;
-            font-weight: 500;
-            color: #fff;
-            background: rgba(255, 255, 255, .06);
-            border: 1px solid rgba(255, 255, 255, .1);
-            border-radius: 12px;
-            padding: 10px 8px;
+            font-weight: 600;
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--rad-md);
+            padding: 12px 8px;
             cursor: pointer;
-            transition: .2s;
+            transition: 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
         }
 
-        button:active {
-            transform: scale(.96);
+        .btn:active {
+            transform: scale(0.96);
+            background: rgba(255, 255, 255, 0.08);
         }
 
-        button:focus-visible {
-            outline: 2px solid var(--ac);
-            outline-offset: 2px;
-        }
-
-        button.on {
-            background: rgba(56, 189, 248, .15);
-            border-color: rgba(56, 189, 248, .4);
+        .btn.active {
+            background: rgba(14, 165, 233, 0.15);
+            border-color: rgba(14, 165, 233, 0.4);
             color: #bae6fd;
         }
 
-        button.run {
-            background: rgba(16, 185, 129, .15);
-            border-color: rgba(16, 185, 129, .4);
-            color: #a7f3d0;
+        .btn-run {
+            background: rgba(16, 185, 129, 0.05);
+            border-color: rgba(16, 185, 129, 0.2);
+            color: var(--ok);
         }
 
-        button.run.on {
+        .btn-run.active {
             background: var(--ok);
-            color: #04140e;
+            color: #022c22;
             font-weight: 700;
-            box-shadow: 0 0 15px rgba(16, 185, 129, .4);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+            border-color: transparent;
         }
 
-        button.stop {
-            background: rgba(239, 68, 68, .15);
-            border-color: rgba(239, 68, 68, .4);
-            color: #fecaca;
+        .btn-stop {
+            background: rgba(239, 68, 68, 0.05);
+            border-color: rgba(239, 68, 68, 0.2);
+            color: var(--bad);
         }
 
+        .btn-outline {
+            width: 100%;
+            background: transparent;
+            border: 1px dashed rgba(255, 255, 255, 0.2);
+            margin-bottom: 0;
+        }
+
+        .btn-reset {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        /* เมนูตั้งค่าขั้นสูง */
         .foldable {
             display: none;
             margin-top: 16px;
             border-top: 1px solid var(--line);
             padding-top: 16px;
+            animation: slideDown 0.3s;
         }
 
         .foldable.show {
             display: block;
-            animation: fadeIn .3s;
         }
 
-        @keyframes fadeIn {
+        @keyframes slideDown {
             from {
                 opacity: 0;
-                transform: translateY(-5px)
+                transform: translateY(-10px)
             }
 
             to {
@@ -512,16 +531,18 @@
         .sliders {
             display: grid;
             grid-template-columns: auto 1fr auto;
-            gap: 12px 14px;
+            gap: 16px 12px;
             align-items: center;
-            background: rgba(0, 0, 0, .2);
-            padding: 14px;
-            border-radius: 14px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 16px;
+            border-radius: var(--rad-md);
+            margin-bottom: 12px;
         }
 
         .sliders label {
             font-size: 12px;
             color: var(--muted);
+            font-weight: 500;
         }
 
         .val {
@@ -535,10 +556,9 @@
 
         input[type=range] {
             -webkit-appearance: none;
-            appearance: none;
             width: 100%;
             height: 4px;
-            background: rgba(255, 255, 255, .15);
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 2px;
         }
 
@@ -547,50 +567,55 @@
             width: 18px;
             height: 18px;
             border-radius: 50%;
-            background: var(--ac);
-            box-shadow: 0 0 10px rgba(56, 189, 248, .5);
-        }
-
-        input[type=range]::-moz-range-thumb {
-            width: 18px;
-            height: 18px;
-            border: none;
-            border-radius: 50%;
-            background: var(--ac);
+            background: #fff;
+            cursor: pointer;
+            border: 2px solid var(--ac);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
         }
 
         .fault-box {
-            background: rgba(239, 68, 68, .1);
-            border: 1px solid rgba(239, 68, 68, .3);
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.2);
             padding: 12px;
-            border-radius: 14px;
-            margin-top: 12px;
+            border-radius: var(--rad-md);
+            margin-bottom: 12px;
+        }
+
+        .btn-sm {
+            padding: 8px 4px;
+            font-size: 12px;
+            font-family: "IBM Plex Mono";
+            font-weight: 600;
+            color: #fca5a5;
         }
 
         .legend {
             display: flex;
-            gap: 12px;
+            gap: 14px;
             flex-wrap: wrap;
             font-size: 11px;
             color: var(--muted);
             justify-content: center;
             margin-top: 16px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 12px;
+            border-radius: 10px;
         }
 
         .legend span {
             display: flex;
             align-items: center;
             gap: 6px;
+            font-weight: 500;
         }
 
         .sw {
             width: 10px;
             height: 10px;
             border-radius: 3px;
-            display: inline-block;
         }
 
-        /* ---------------- Detail modal ---------------- */
+        /* ---------------- Modal รายละเอียดชิ้นส่วน ---------------- */
         #detail {
             position: fixed;
             inset: 0;
@@ -599,11 +624,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(0, 0, 0, .6);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
             opacity: 0;
-            transition: .3s;
+            transition: 0.3s;
             padding: 20px;
         }
 
@@ -613,20 +638,23 @@
         }
 
         #detail .card {
-            max-width: 420px;
+            max-width: 400px;
             border-color: var(--ac);
-            background: rgba(15, 23, 33, .95);
+            background: rgba(15, 23, 33, 0.95);
             position: relative;
-            transform: translateY(20px);
-            transition: .3s cubic-bezier(.175, .885, .32, 1.275);
+            transform: translateY(20px) scale(0.95);
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding: 24px;
+            border-radius: var(--rad-lg);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
         }
 
         #detail.show .card {
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
         }
 
         #detail h3 {
-            margin: 0 40px 10px 0;
+            margin: 0 40px 12px 0;
             font-size: 18px;
             color: var(--ac);
         }
@@ -641,38 +669,18 @@
 
         #detail .close {
             position: absolute;
-            right: 14px;
-            top: 14px;
-            background: rgba(255, 255, 255, .1);
+            right: 16px;
+            top: 16px;
+            background: rgba(255, 255, 255, 0.1);
             border: none;
             border-radius: 50%;
             width: 32px;
             height: 32px;
-            padding: 0;
-        }
-
-        #errbar {
-            position: fixed;
-            left: 8px;
-            right: 8px;
-            top: calc(70px + env(safe-area-inset-top, 0px));
-            z-index: 60;
-            display: none;
-            background: rgba(120, 20, 20, .92);
-            border: 1px solid #ff8a7a;
-            border-radius: 10px;
-            padding: 9px 12px;
-            font-size: 11.5px;
-            line-height: 1.5;
-            font-family: "IBM Plex Mono", monospace;
-            word-break: break-word;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            * {
-                animation-duration: .01ms !important;
-                transition-duration: .01ms !important;
-            }
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -680,33 +688,39 @@
 <body>
     <div class="arjs-loader" id="loader">
         <div class="spinner"></div>
-        <div>กำลังเตรียมสภาพแวดล้อม AR…</div>
+        <div>กำลังเตรียมสภาพแวดล้อม 3D / AR…</div>
     </div>
 
-    <div id="errbar"></div>
-
-    <div id="hud">
-        <div class="glass badge">
+    <!-- HUD บน -->
+    <div id="hud-top">
+        <div class="glass title-card">
             <h1>VEICHI AC10 Series</h1>
-            <p>VFD แบบ Book design • ภาพตัดขวาง</p>
+            <p>VFD แบบแนวตั้ง • ภาพตัดขวางจำลอง</p>
         </div>
-        <div class="glass" id="status-pill">
-            <span id="dot"></span><span id="statustext">ค้นหา Marker</span>
+        <div class="glass status-pill" id="status-pill">
+            <span class="dot" id="dot"></span><span id="statustext">ค้นหา Marker</span>
         </div>
     </div>
 
+    <!-- Meter ขวา -->
     <div id="meter" class="glass">
         <div class="big"><span id="mFreq">0.00</span><small>Hz</small></div>
         <div class="sub"><span id="mRpm">0</span> rpm · <span id="mState">STOP</span></div>
-        <div id="heatbar">
-            <div id="heatfill"></div>
+        <div class="heatbar">
+            <div class="heatfill" id="heatfill"></div>
         </div>
     </div>
 
-    <div id="faultbar">
-        <div id="faultmsg"></div>
+    <!-- Error Toast -->
+    <div id="toast-error" class="glass">
+        <div class="toast-head">
+            <b id="fault-code">E.XX</b> <span id="fault-title">Error</span>
+        </div>
+        <div class="toast-body" id="fault-desc">Description</div>
+        <button class="btn btn-reset" id="btnToastReset">รับทราบและรีเซ็ตระบบ</button>
     </div>
 
+    <!-- Modal 3D Part -->
     <div id="detail">
         <div class="card glass">
             <button class="close" id="detailClose">✕</button>
@@ -715,82 +729,86 @@
         </div>
     </div>
 
+    <!-- แผงควบคุมด้านล่าง -->
     <div id="dock">
-        <div class="card glass" id="dockCard">
+        <div class="glass dock-card" id="dockCard">
             <div class="drag-handle" id="btnFoldHandle"></div>
 
-            <div class="stepline">
-                <span class="stepno" id="stepno">01</span>
-                <div style="flex:1;">
-                    <h2 class="steptitle" id="steptitle">—</h2>
-                    <p id="stepdesc">—</p>
-                    <p id="stepspec"></p>
+            <div class="step-header">
+                <span class="step-num" id="step-num">01</span>
+                <div class="step-info">
+                    <h2 id="step-title">—</h2>
+                    <p id="step-desc">—</p>
+                    <p id="step-spec"></p>
                 </div>
-                <button id="btnFold" title="ย่อแผง"
-                    style="flex:none; width:32px; background:transparent; border:none; font-size:22px; padding:0; color:var(--muted); transition:transform .3s">▾</button>
+                <button id="btnFold">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
             </div>
 
             <div class="track" id="track"></div>
 
-            <div id="panelBody">
-                <div class="btn-grid">
-                    <button id="prev">◀ ย้อนกลับ</button>
-                    <button id="play" class="on">❚❚ หยุดออโต้</button>
-                    <button id="next">ถัดไป ▶</button>
+            <div class="dock-body">
+                <div class="grid-3">
+                    <button class="btn" id="btnPrev">◀ ก่อนหน้า</button>
+                    <button class="btn active" id="btnPlay">❚❚ หยุดออโต้</button>
+                    <button class="btn" id="btnNext">ถัดไป ▶</button>
                 </div>
 
-                <div class="btn-grid cols-2">
-                    <button id="btnRun" class="run on">▶ เดินเครื่อง</button>
-                    <button id="btnStop" class="stop">■ หยุด</button>
+                <div class="grid-2">
+                    <button class="btn btn-run active" id="btnRun">▶ เดินเครื่อง</button>
+                    <button class="btn btn-stop" id="btnStop">■ หยุด</button>
                 </div>
 
-                <div class="btn-grid cols-2">
-                    <button id="btnCut" class="on">เปิดฝาดู</button>
-                    <button id="btnExp">แยกชิ้นส่วน</button>
-                    <button id="btnFlow" class="on">ทางเดินไฟ</button>
-                    <button id="btnFace" class="on">หันเข้ากล้อง</button>
-                    <button id="btnTilt" style="grid-column:1/-1">marker วางบนโต๊ะ · แตะเพื่อสลับเป็นบนจอ</button>
+                <div class="grid-3">
+                    <button class="btn active" id="btnCut">👁️ เปิดฝา</button>
+                    <button class="btn" id="btnExp">🧩 แยกชิ้น</button>
+                    <button class="btn active" id="btnFlow">⚡ เดินไฟ</button>
                 </div>
 
-                <button id="btnMore"
-                    style="width:100%; margin-top:12px; background:rgba(255,255,255,0.03); border-style:dashed;">ตั้งค่าขั้นสูงและจำลองปัญหา</button>
+                <button class="btn btn-outline" id="btnMore">⚙️ ตั้งค่าขั้นสูง & จำลองปัญหา</button>
 
+                <!-- เมนูย่อย -->
                 <div id="more" class="foldable">
                     <div class="sliders">
-                        <label for="freq">ความถี่เป้าหมาย</label>
-                        <input id="freq" type="range" min="0" max="120" step="0.5" value="50">
-                        <span class="val" id="freqval">50.0 Hz</span>
+                        <label>ความถี่เป้าหมาย</label>
+                        <input id="inFreq" type="range" min="0" max="120" step="0.5" value="50">
+                        <span class="val" id="valFreq">50.0 Hz</span>
 
-                        <label for="accel">เวลาเร่ง / ชะลอ</label>
-                        <input id="accel" type="range" min="1" max="20" step="0.5" value="5">
-                        <span class="val" id="accelval">5.0 s</span>
+                        <label>เวลาเร่ง / ชะลอ</label>
+                        <input id="inAccel" type="range" min="1" max="20" step="0.5" value="5">
+                        <span class="val" id="valAccel">5.0 s</span>
 
-                        <label for="size">ขนาดโมเดล</label>
-                        <input id="size" type="range" min="0.25" max="1.2" step="0.05" value="0.6">
-                        <span class="val" id="sizeval">0.60×</span>
+                        <label>ขนาดโมเดล</label>
+                        <input id="inSize" type="range" min="0.3" max="1.5" step="0.05" value="0.75">
+                        <span class="val" id="valSize">0.75x</span>
                     </div>
 
                     <div class="fault-box">
-                        <p style="margin:0 0 8px; font-size:12px; color:var(--bad); font-weight:600;">จำลองความผิดพลาด
-                        </p>
-                        <div class="btn-grid" style="grid-template-columns: repeat(4, 1fr); margin-top:0;">
-                            <button style="padding:8px 4px; font-size:12px;" data-fault="oC">E.oC</button>
-                            <button style="padding:8px 4px; font-size:12px;" data-fault="oU">E.oU</button>
-                            <button style="padding:8px 4px; font-size:12px;" data-fault="oH">E.oH</button>
-                            <button style="padding:8px 4px; font-size:12px;" data-fault="LU">E.LU</button>
+                        <p style="margin:0 0 10px; font-size:12px; color:var(--bad); font-weight:600;">⚠️
+                            จำลองความผิดพลาด (Faults)</p>
+                        <div class="grid-4">
+                            <button class="btn btn-sm" data-fault="oC">E.oC</button>
+                            <button class="btn btn-sm" data-fault="oU">E.oU</button>
+                            <button class="btn btn-sm" data-fault="oH">E.oH</button>
+                            <button class="btn btn-sm" data-fault="LU">E.LU</button>
                         </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <button class="btn" id="btnSound">🔊 เปิดเสียง</button>
+                        <button class="btn" id="btnPreview" style="border-color:rgba(255,255,255,0.2)">🔄 โหมด 3D
+                            หมุนอิสระ</button>
                     </div>
 
                     <div class="legend">
                         <span><i class="sw" style="background:var(--ac)"></i> AC IN</span>
                         <span><i class="sw" style="background:var(--dc)"></i> DC BUS</span>
                         <span><i class="sw" style="background:var(--pwm)"></i> PWM OUT</span>
-                        <span><i class="sw" style="background:var(--air)"></i> AIR</span>
-                    </div>
-
-                    <div class="btn-grid cols-2">
-                        <button id="btnSound">เปิดเสียงมอเตอร์</button>
-                        <button id="btnPreview" style="background:rgba(255,255,255,0.15)">โหมด 3D หมุนอิสระ</button>
+                        <span><i class="sw" style="background:var(--air)"></i> ลมระบาย</span>
                     </div>
                 </div>
             </div>
@@ -802,75 +820,171 @@
         renderer="antialias: true; colorManagement: true; alpha: true; precision: medium" embedded
         arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false; patternRatio: 0.5;">
 
-        <a-entity light="type: hemisphere; color: #eaf4ff; groundColor: #2b3740; intensity: 1.0"></a-entity>
-        <a-entity light="type: directional; color: #ffffff; intensity: 0.7" position="1.6 2.6 2.0"></a-entity>
-        <a-entity light="type: directional; color: #9ad8ff; intensity: 0.3" position="-1.8 1.4 -1.6"></a-entity>
+        <a-entity light="type: hemisphere; color: #ffffff; groundColor: #1e293b; intensity: 1.1"></a-entity>
+        <a-entity light="type: directional; color: #ffffff; intensity: 0.6; castShadow: false"
+            position="2 4 3"></a-entity>
+        <a-entity light="type: directional; color: #7dd3fc; intensity: 0.4; castShadow: false"
+            position="-3 2 -2"></a-entity>
 
         <a-marker id="markerRoot" preset="hiro" smooth="true" smoothCount="8" smoothTolerance="0.012"
-            smoothThreshold="4"></a-marker>
+            smoothThreshold="4">
+            <a-entity id="mount-marker"></a-entity>
+        </a-marker>
 
         <a-entity camera cursor="rayOrigin: mouse; fuse: false"
-            raycaster="objects: [data-part], [data-act]; interval: 120">
-            <a-entity id="previewRoot" position="0.15 0.15 -3.4"></a-entity>
+            raycaster="objects: [data-part], [data-act]; interval: 100">
+            <a-entity id="mount-preview"></a-entity>
         </a-entity>
     </a-scene>
 
     <script>
         window.VFD = { target: 50, freq: 0, poles: 4, ramp: 5, running: true, fault: null, heat: 0, flow: true };
 
-        AFRAME.registerComponent('th-label', { schema: { text: { default: '' }, width: { default: 0.5 }, size: { default: 40 }, color: { default: '#e8f0f4' }, bg: { default: 'rgba(10,16,22,0.6)' }, accent: { default: '#38bdf8' }, align: { default: 'left' }, mono: { default: false } }, init() { this.canvas = document.createElement('canvas'); this.ctx = this.canvas.getContext('2d'); this.texture = new THREE.CanvasTexture(this.canvas); this.texture.minFilter = THREE.LinearFilter; this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: this.texture, transparent: true, side: THREE.DoubleSide })); this.el.setObject3D('mesh', this.mesh); this.render(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => this.render()); }, update() { if (this.mesh) this.render(); }, render() { const d = this.data, S = 2, W = 620, pad = 26 * S, fs = d.size * S; const family = d.mono ? '"IBM Plex Mono", monospace' : '"IBM Plex Sans Thai", "Noto Sans Thai", Tahoma, sans-serif'; const c = this.canvas, ctx = this.ctx; c.width = W * S; ctx.font = `600 ${fs}px ${family}`; const maxW = c.width - pad * 2, lines = []; String(d.text || ' ').split('|').forEach(part => { let line = ''; part.trim().split(' ').forEach(w => { const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; }); lines.push(line); }); const lh = fs * 1.42; c.height = Math.round(pad * 2 + lh * lines.length); ctx.clearRect(0, 0, c.width, c.height); if (d.bg !== 'none') { ctx.fillStyle = d.bg; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(0, 0, c.width, c.height, 18 * S) : ctx.rect(0, 0, c.width, c.height); ctx.fill(); ctx.fillStyle = d.accent; ctx.fillRect(0, 0, 7 * S, c.height); } ctx.font = `600 ${fs}px ${family}`; ctx.fillStyle = d.color; ctx.textBaseline = 'middle'; ctx.textAlign = d.align; const x = d.align === 'center' ? c.width / 2 : (d.align === 'right' ? c.width - pad : pad + 6 * S); lines.forEach((ln, i) => ctx.fillText(ln, x, pad + lh * (i + 0.5))); this.texture.needsUpdate = true; this.mesh.geometry.dispose(); this.mesh.geometry = new THREE.PlaneGeometry(d.width, d.width * (c.height / c.width)); } });
-        AFRAME.registerComponent('billboard', { init() { this._v = new THREE.Vector3(); }, tick() { const cam = this.el.sceneEl.camera; if (!cam) return; cam.getWorldPosition(this._v); this.el.object3D.lookAt(this._v); } });
-        AFRAME.registerComponent('glow', { schema: { active: { default: false }, color: { default: '#38bdf8' } }, init() { this._c = new THREE.Color(this.data.color); this._base = null; }, update() { this._c = new THREE.Color(this.data.color); }, tick(t) { const o = this.el.object3D; if (!o) return; if (this._base === null) this._base = o.scale.x; const on = this.data.active; const k = on ? 0.30 + 0.32 * (0.5 + 0.5 * Math.sin(t / 210)) : 0; o.traverse(n => { const m = n.material; if (!m || !m.emissive) return; m.emissive.set(on ? this._c : 0x000000); m.emissiveIntensity = k; }); const s = this._base * (on ? 1 + 0.03 * (0.5 + 0.5 * Math.sin(t / 210)) : 1); o.scale.set(s, s, s); } });
-        AFRAME.registerComponent('heat-tint', { init() { this.cool = new THREE.Color('#94a3b8'); this.hot = new THREE.Color('#e0492c'); this.tmp = new THREE.Color(); this.tick = AFRAME.utils.throttleTick(this.tick, 120, this); }, tick() { this.tmp.copy(this.cool).lerp(this.hot, Math.min(1, VFD.heat)); this.el.object3D.traverse(n => { if (n.material && n.material.color && !n.material.map) n.material.color.copy(this.tmp); }); } });
-        AFRAME.registerComponent('energy-flow', { schema: { path: { default: '' }, color: { default: '#38bdf8' }, count: { default: 5 }, speed: { default: 0.45 }, size: { default: 0.022 }, enabled: { default: true }, tracks: { default: 'ac' }, shape: { default: 'sphere' }, line: { default: true } }, init() { this.pts = this.data.path.split(',').map(s => { const a = s.trim().split(/\s+/).map(Number); return new THREE.Vector3(a[0], a[1], a[2]); }); this.seg = []; this.total = 0; for (let i = 0; i < this.pts.length - 1; i++) { const d = this.pts[i].distanceTo(this.pts[i + 1]); this.seg.push(d); this.total += d; } const s = this.data.size; let geo; if (this.data.shape === 'arrow') { geo = new THREE.ConeGeometry(s * 1.5, s * 3.4, 8); geo.rotateX(Math.PI / 2); } else { geo = new THREE.SphereGeometry(s, 10, 10); } const mat = new THREE.MeshBasicMaterial({ color: this.data.color, transparent: true, opacity: this.data.shape === 'arrow' ? 0.85 : 1 }); this.group = new THREE.Group(); this.dots = []; for (let i = 0; i < this.data.count; i++) { const m = new THREE.Mesh(geo, mat); this.group.add(m); this.dots.push(m); } if (this.data.line) { this.group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(this.pts), new THREE.LineBasicMaterial({ color: this.data.color, transparent: true, opacity: 0.35 }))); } this.el.setObject3D('flow', this.group); this._z = new THREE.Vector3(0, 0, 1); }, at(d) { d = ((d % this.total) + this.total) % this.total; for (let i = 0; i < this.seg.length; i++) { if (d <= this.seg[i]) return { p: this.pts[i].clone().lerp(this.pts[i + 1], this.seg[i] ? d / this.seg[i] : 0), i }; d -= this.seg[i]; } return { p: this.pts[this.pts.length - 1].clone(), i: this.seg.length - 1 }; }, tick(t) { if (!this.group) return; this.group.visible = this.data.enabled && VFD.flow && !(this.data.tracks === 'pwm' && VFD.freq < 0.2); if (!this.group.visible) return; const k = this.data.tracks === 'pwm' ? Math.max(0.06, VFD.freq / 50) : this.data.tracks === 'air' ? Math.max(0.35, VFD.freq / 50) : 1; const sp = this.data.speed * k; for (let i = 0; i < this.dots.length; i++) { const r = this.at(t / 1000 * sp + i * this.total / this.dots.length); this.dots[i].position.copy(r.p); if (this.data.shape === 'arrow') { const dir = this.pts[r.i + 1].clone().sub(this.pts[r.i]).normalize(); this.dots[i].quaternion.setFromUnitVectors(this._z, dir); } } } });
-        AFRAME.registerComponent('scope', { schema: { mode: { default: 'ac' }, w: { default: 0.56 } }, init() { this.c = document.createElement('canvas'); this.c.width = 512; this.c.height = 256; this.ctx = this.c.getContext('2d'); this.tex = new THREE.CanvasTexture(this.c); this.tex.minFilter = THREE.LinearFilter; this.el.setObject3D('mesh', new THREE.Mesh(new THREE.PlaneGeometry(this.data.w, this.data.w * 0.5), new THREE.MeshBasicMaterial({ map: this.tex, transparent: true }))); this.tick = AFRAME.utils.throttleTick(this.tick, 40, this); }, tick(t) { const ctx = this.ctx, W = 512, H = 256, mid = H / 2, A = 82, ph = t / 340; ctx.clearRect(0, 0, W, H); ctx.fillStyle = 'rgba(6,12,17,0.9)'; ctx.fillRect(0, 0, W, H); ctx.strokeStyle = 'rgba(140,180,200,0.16)'; ctx.lineWidth = 1; for (let x = 0; x <= W; x += 64) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); } for (let y = 0; y <= H; y += 42) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); } const draw = (fn, color, lw) => { ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = lw || 3; for (let x = 0; x <= W; x++) { const y = fn(x / W); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); }; if (this.data.mode === 'ac') { [['#38bdf8', 0], ['#4ade80', 2.094], ['#c9a6ff', 4.188]].forEach(([col, off]) => draw(u => mid - A * Math.sin(u * Math.PI * 4 + ph + off), col, 2.5)); } else if (this.data.mode === 'dc') { const lv = VFD.fault === 'oU' ? 1.12 : VFD.fault === 'LU' ? 0.55 : 0.9; draw(u => mid - A * (lv + 0.055 * Math.abs(Math.sin(u * Math.PI * 12 + ph))), VFD.fault === 'oU' || VFD.fault === 'LU' ? '#ef4444' : '#f97316', 3); ctx.setLineDash([7, 7]); draw(() => mid - A * 0.93, 'rgba(250,204,21,0.75)', 2); ctx.setLineDash([]); } else { const f = Math.max(0.001, VFD.freq / 50); const env = u => Math.sin(u * Math.PI * 4 * f + ph * f); if (VFD.freq < 0.2) { draw(() => mid, 'rgba(250,204,21,0.5)', 2); } else { ctx.beginPath(); ctx.strokeStyle = '#facc15'; ctx.lineWidth = 1.6; let prev = mid; for (let x = 0; x <= W; x++) { const u = x / W; const y = mid - A * (Math.sin(u * Math.PI * 120) < env(u) ? 1 : -1) * 0.98; ctx.moveTo(x, prev); ctx.lineTo(x, y); prev = y; } ctx.stroke(); draw(u => mid - A * 0.72 * env(u), '#38bdf8', 3); } } this.tex.needsUpdate = true; } });
-        AFRAME.registerComponent('spin', { schema: { rate: { default: 200 }, fromFreq: { default: false } }, tick(time, dt) { if (!dt) return; const r = this.data.fromFreq ? (VFD.freq / 50) * this.data.rate : this.data.rate; this.el.object3D.rotation.y += (r * dt) / 1000 * Math.PI / 180; } });
-
-        /* หมุนโมเดลรอบแกนตั้งให้ด้านหน้าเครื่องหันเข้าหากล้องเสมอ
-           แก้ปัญหาส่องจากมุมข้างแล้วเห็นตัวเครื่องเป็นแผ่นบาง */
-        AFRAME.registerComponent('face-cam', {
-            schema: { enabled: { default: true } },
-            init() { this._c = new THREE.Vector3(); this._p = new THREE.Vector3(); },
-            tick() {
-                if (!this.data.enabled) return;
-                const cam = this.el.sceneEl.camera;
-                const o = this.el.object3D;
-                if (!cam || !o.parent) return;
-                cam.getWorldPosition(this._c);
-                o.parent.worldToLocal(this._c);          // แปลงเป็นพิกัดของ marker
-                const dx = this._c.x - o.position.x, dz = this._c.z - o.position.z;
-                o.rotation.set(0, Math.atan2(dx, dz), 0);
+        // ---------------- A-Frame Components ----------------
+        AFRAME.registerComponent('th-label', {
+            schema: { text: { default: '' }, width: { default: 0.5 }, size: { default: 40 }, color: { default: '#f8fafc' }, bg: { default: 'rgba(15,23,42,0.8)' }, accent: { default: '#0ea5e9' }, align: { default: 'left' }, mono: { default: false } },
+            init() {
+                this.canvas = document.createElement('canvas'); this.ctx = this.canvas.getContext('2d');
+                this.texture = new THREE.CanvasTexture(this.canvas); this.texture.minFilter = THREE.LinearFilter;
+                this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: this.texture, transparent: true, side: THREE.DoubleSide }));
+                this.el.setObject3D('mesh', this.mesh);
+                this.render();
+                if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => this.render());
+            },
+            update() { if (this.mesh) this.render(); },
+            render() {
+                const d = this.data, S = 2, W = 620, pad = 24 * S, fs = d.size * S;
+                const family = d.mono ? '"IBM Plex Mono", monospace' : '"IBM Plex Sans Thai", sans-serif';
+                const c = this.canvas, ctx = this.ctx; c.width = W * S; ctx.font = `600 ${fs}px ${family}`;
+                const maxW = c.width - pad * 2, lines = [];
+                String(d.text || ' ').split('|').forEach(part => {
+                    let line = '';
+                    part.trim().split(' ').forEach(w => {
+                        const t = line ? line + ' ' + w : w;
+                        if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t;
+                    });
+                    lines.push(line);
+                });
+                const lh = fs * 1.4; c.height = Math.round(pad * 2 + lh * lines.length);
+                ctx.clearRect(0, 0, c.width, c.height);
+                if (d.bg !== 'none') {
+                    ctx.fillStyle = d.bg; ctx.beginPath();
+                    if (ctx.roundRect) ctx.roundRect(0, 0, c.width, c.height, 16 * S); else ctx.rect(0, 0, c.width, c.height);
+                    ctx.fill();
+                    ctx.fillStyle = d.accent; ctx.fillRect(0, 0, 8 * S, c.height);
+                }
+                ctx.font = `600 ${fs}px ${family}`; ctx.fillStyle = d.color; ctx.textBaseline = 'middle'; ctx.textAlign = d.align;
+                const x = d.align === 'center' ? c.width / 2 : (d.align === 'right' ? c.width - pad : pad + 10 * S);
+                lines.forEach((ln, i) => ctx.fillText(ln, x, pad + lh * (i + 0.5)));
+                this.texture.needsUpdate = true;
+                this.mesh.geometry.dispose();
+                this.mesh.geometry = new THREE.PlaneGeometry(d.width, d.width * (c.height / c.width));
             }
         });
 
-        /* ---------------- โมเดล 3 มิติ ---------------- */
+        AFRAME.registerComponent('billboard', { init() { this.camPos = new THREE.Vector3(); }, tick() { const cam = this.el.sceneEl.camera; if (!cam) return; cam.getWorldPosition(this.camPos); this.el.object3D.lookAt(this.camPos); } });
+        AFRAME.registerComponent('glow', { schema: { active: { default: false }, color: { default: '#0ea5e9' } }, init() { this._c = new THREE.Color(this.data.color); this._base = null; }, update() { this._c = new THREE.Color(this.data.color); }, tick(t) { const o = this.el.object3D; if (!o) return; if (this._base === null) this._base = o.scale.x; const on = this.data.active; const k = on ? 0.3 + 0.3 * (0.5 + 0.5 * Math.sin(t / 200)) : 0; o.traverse(n => { const m = n.material; if (!m || !m.emissive) return; m.emissive.set(on ? this._c : 0x000000); m.emissiveIntensity = k; }); const s = this._base * (on ? 1 + 0.02 * (0.5 + 0.5 * Math.sin(t / 200)) : 1); o.scale.set(s, s, s); } });
+        AFRAME.registerComponent('heat-tint', { init() { this.cool = new THREE.Color('#64748b'); this.hot = new THREE.Color('#dc2626'); this.tmp = new THREE.Color(); this.tick = AFRAME.utils.throttleTick(this.tick, 100, this); }, tick() { this.tmp.copy(this.cool).lerp(this.hot, Math.min(1, VFD.heat)); this.el.object3D.traverse(n => { if (n.material && n.material.color && !n.material.map) n.material.color.copy(this.tmp); }); } });
+
+        AFRAME.registerComponent('energy-flow', {
+            schema: { path: { default: '' }, color: { default: '#0ea5e9' }, count: { default: 5 }, speed: { default: 0.5 }, size: { default: 0.025 }, enabled: { default: true }, tracks: { default: 'ac' }, shape: { default: 'sphere' }, line: { default: true } },
+            init() {
+                this.pts = this.data.path.split(',').map(s => { const a = s.trim().split(/\s+/).map(Number); return new THREE.Vector3(a[0], a[1], a[2]); });
+                this.seg = []; this.total = 0;
+                for (let i = 0; i < this.pts.length - 1; i++) { const d = this.pts[i].distanceTo(this.pts[i + 1]); this.seg.push(d); this.total += d; }
+                const s = this.data.size;
+                let geo = this.data.shape === 'arrow' ? new THREE.ConeGeometry(s * 1.2, s * 3.5, 6).rotateX(Math.PI / 2) : new THREE.SphereGeometry(s, 10, 10);
+                const mat = new THREE.MeshBasicMaterial({ color: this.data.color, transparent: true, opacity: this.data.shape === 'arrow' ? 0.8 : 1 });
+                this.group = new THREE.Group(); this.dots = [];
+                for (let i = 0; i < this.data.count; i++) { const m = new THREE.Mesh(geo, mat); this.group.add(m); this.dots.push(m); }
+                if (this.data.line) this.group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(this.pts), new THREE.LineBasicMaterial({ color: this.data.color, transparent: true, opacity: 0.25 })));
+                this.el.setObject3D('flow', this.group); this._z = new THREE.Vector3(0, 0, 1);
+            },
+            at(d) {
+                d = ((d % this.total) + this.total) % this.total;
+                for (let i = 0; i < this.seg.length; i++) { if (d <= this.seg[i]) return { p: this.pts[i].clone().lerp(this.pts[i + 1], this.seg[i] ? d / this.seg[i] : 0), i }; d -= this.seg[i]; }
+                return { p: this.pts[this.pts.length - 1].clone(), i: this.seg.length - 1 };
+            },
+            tick(t) {
+                if (!this.group) return;
+                this.group.visible = this.data.enabled && VFD.flow && !(this.data.tracks === 'pwm' && VFD.freq < 0.3);
+                if (!this.group.visible) return;
+                const k = this.data.tracks === 'pwm' ? Math.max(0.1, VFD.freq / 50) : this.data.tracks === 'air' ? Math.max(0.4, VFD.freq / 50) : 1;
+                const sp = this.data.speed * k;
+                for (let i = 0; i < this.dots.length; i++) {
+                    const r = this.at(t / 1000 * sp + i * this.total / this.dots.length);
+                    this.dots[i].position.copy(r.p);
+                    if (this.data.shape === 'arrow') { const dir = this.pts[r.i + 1].clone().sub(this.pts[r.i]).normalize(); this.dots[i].quaternion.setFromUnitVectors(this._z, dir); }
+                }
+            }
+        });
+
+        AFRAME.registerComponent('scope', {
+            schema: { mode: { default: 'ac' }, w: { default: 0.6 } },
+            init() {
+                this.c = document.createElement('canvas'); this.c.width = 512; this.c.height = 256; this.ctx = this.c.getContext('2d');
+                this.tex = new THREE.CanvasTexture(this.c); this.tex.minFilter = THREE.LinearFilter;
+                this.el.setObject3D('mesh', new THREE.Mesh(new THREE.PlaneGeometry(this.data.w, this.data.w * 0.5), new THREE.MeshBasicMaterial({ map: this.tex, transparent: true })));
+                this.tick = AFRAME.utils.throttleTick(this.tick, 40, this);
+            },
+            tick(t) {
+                const ctx = this.ctx, W = 512, H = 256, mid = H / 2, A = 90, ph = t / 340;
+                ctx.clearRect(0, 0, W, H);
+                ctx.fillStyle = 'rgba(15,23,42,0.9)'; ctx.fillRect(0, 0, W, H);
+                ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
+                for (let x = 0; x <= W; x += 64) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+                for (let y = 0; y <= H; y += 42) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+                const draw = (fn, color, lw) => { ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = lw || 3; for (let x = 0; x <= W; x++) { const y = fn(x / W); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); };
+
+                if (this.data.mode === 'ac') {
+                    [['#0ea5e9', 0], ['#10b981', 2.094], ['#a855f7', 4.188]].forEach(([col, off]) => draw(u => mid - A * Math.sin(u * Math.PI * 4 + ph + off), col, 2.5));
+                } else if (this.data.mode === 'dc') {
+                    const lv = VFD.fault === 'oU' ? 1.15 : VFD.fault === 'LU' ? 0.5 : 0.9;
+                    draw(u => mid - A * (lv + 0.05 * Math.abs(Math.sin(u * Math.PI * 12 + ph))), VFD.fault === 'oU' || VFD.fault === 'LU' ? '#ef4444' : '#f97316', 3);
+                    ctx.setLineDash([8, 8]); draw(() => mid - A * 0.95, 'rgba(234,179,8,0.5)', 2); ctx.setLineDash([]);
+                } else {
+                    const f = Math.max(0.001, VFD.freq / 50); const env = u => Math.sin(u * Math.PI * 4 * f + ph * f);
+                    if (VFD.freq < 0.3) { draw(() => mid, 'rgba(234,179,8,0.3)', 2); } else {
+                        ctx.beginPath(); ctx.strokeStyle = '#eab308'; ctx.lineWidth = 1.6; let prev = mid;
+                        for (let x = 0; x <= W; x++) { const u = x / W; const y = mid - A * (Math.sin(u * Math.PI * 120) < env(u) ? 1 : -1) * 0.96; ctx.moveTo(x, prev); ctx.lineTo(x, y); prev = y; }
+                        ctx.stroke(); draw(u => mid - A * 0.7 * env(u), '#0ea5e9', 3);
+                    }
+                }
+                this.tex.needsUpdate = true;
+            }
+        });
+
+        AFRAME.registerComponent('spin', { schema: { rate: { default: 200 }, fromFreq: { default: false } }, tick(time, dt) { if (!dt) return; const r = this.data.fromFreq ? (VFD.freq / 50) * this.data.rate : this.data.rate; this.el.object3D.rotation.y += (r * dt) / 1000 * Math.PI / 180; } });
+
+        // ---------------- โครงสร้างโมเดลแนวตั้ง ----------------
         function buildModel() {
-            const M = (c, o) => `material="color:${c}; metalness:0.2; roughness:0.6${o !== undefined ? '; opacity:' + o + '; transparent:true' : ''}"`;
-            const CREAM = '#e4e0d2', CREAM_D = '#cdc8b8', GREEN = '#1f7a4d', DARK = '#2f3438';
+            const M = (c, o) => `material="color:${c}; metalness:0.3; roughness:0.5${o !== undefined ? '; opacity:' + o + '; transparent:true' : ''}"`;
+            const CREAM = '#e2e8f0', CREAM_D = '#cbd5e1', GREEN = '#15803d', DARK = '#1e293b';
 
             return `
-<a-entity id="tiltRoot">
-<a-entity id="modelRoot" scale="0.7 0.7 0.7" face-cam="enabled: true">
-  <a-torus position="0 0.012 0.3" rotation="-90 0 0" radius="1.05" radius-tubular="0.006" material="color:#38bdf8; opacity:0.35; transparent:true" animation="property: rotation; to: -90 360 0; dur: 24000; loop: true; easing: linear"></a-torus>
+<a-entity id="modelRoot" scale="0.75 0.75 0.75" position="0 -0.2 0">
+  <a-torus position="0 0.012 0" rotation="-90 0 0" radius="1.3" radius-tubular="0.006" material="color:#0ea5e9; opacity:0.35; transparent:true" animation="property: rotation; to: -90 360 0; dur: 24000; loop: true; easing: linear"></a-torus>
 
-  <a-entity position="0 2.36 0" th-label="text: VEICHI AC10 Series; width:0.8; size:26; accent:#eab308; bg:rgba(10,16,22,0.75); align:center"></a-entity>
+  <a-entity position="0 2.3 0" billboard th-label="text: VEICHI AC10 Series|VFD ทรงแคบแบบ Book design; width:1.3; size:32; accent:#eab308; align:center"></a-entity>
+  <a-entity id="specPlate" position="0.9 1.1 0" billboard th-label="text: 1 Phase 220V / 3 Phase 380V|V/F & Vector Control|Output 0-599 Hz; width:0.8; size:20; accent:#10b981"></a-entity>
 
-  <!-- จอรูปคลื่นสามจุดวัด เรียงเป็นแถวเหนือตัวเครื่อง -->
-  <a-entity position="-0.60 1.98 0">
-    <a-entity scope="mode: ac; w: 0.52"></a-entity>
-    <a-entity position="0 -0.20 0" th-label="text: R S T; width:0.3; size:24; accent:#38bdf8; bg:rgba(10,16,22,0.75); align:center"></a-entity>
+  <!-- หน้าจอ Scope เรียงแนวตั้งด้านซ้าย -->
+  <a-entity position="-0.9 1.6 0" billboard>
+    <a-entity scope="mode: ac; w: 0.45"></a-entity>
+    <a-entity position="0 -0.18 0" th-label="text: R S T (AC IN); width:0.4; size:22; accent:#0ea5e9; align:center"></a-entity>
   </a-entity>
-  <a-entity position="0 1.98 0">
-    <a-entity scope="mode: dc; w: 0.52"></a-entity>
-    <a-entity position="0 -0.20 0" th-label="text: DC Bus; width:0.3; size:24; accent:#f97316; bg:rgba(10,16,22,0.75); align:center"></a-entity>
+  <a-entity position="-0.9 0.9 0" billboard>
+    <a-entity scope="mode: dc; w: 0.45"></a-entity>
+    <a-entity position="0 -0.18 0" th-label="text: DC Bus; width:0.35; size:22; accent:#f97316; align:center"></a-entity>
   </a-entity>
-  <a-entity position="0.60 1.98 0">
-    <a-entity scope="mode: pwm; w: 0.52"></a-entity>
-    <a-entity position="0 -0.20 0" th-label="text: U V W; width:0.3; size:24; accent:#eab308; bg:rgba(10,16,22,0.75); align:center"></a-entity>
+  <a-entity position="-0.9 0.2 0" billboard>
+    <a-entity scope="mode: pwm; w: 0.45"></a-entity>
+    <a-entity position="0 -0.18 0" th-label="text: U V W (PWM); width:0.4; size:22; accent:#eab308; align:center"></a-entity>
   </a-entity>
 
-  <a-entity id="drive" position="0 0 0">
-    <a-box id="shellFront" position="0 0.75 0.335" width="0.66" height="1.50" depth="0.015" ${M(CREAM, 0.12)}></a-box>
+  <!-- ตัวไดรฟ์ VFD (ตรงกลาง) -->
+  <a-entity id="drive" position="0 0.4 0">
+    <a-box id="shellFront" position="0 0.75 0.335" width="0.66" height="1.50" depth="0.015" ${M(CREAM, 0.15)}></a-box>
     <a-box position="0 0.75 -0.335" width="0.66" height="1.50" depth="0.015" ${M(CREAM_D)}></a-box>
     <a-box position="-0.335 0.75 0" width="0.015" height="1.50" depth="0.66" ${M(CREAM_D)}></a-box>
     <a-box position="0.335 0.75 0"  width="0.015" height="1.50" depth="0.66" ${M(CREAM_D)}></a-box>
@@ -878,324 +992,374 @@
     <a-box position="0 0.00 0" width="0.66" height="0.015" depth="0.66" ${M(CREAM_D)}></a-box>
     <a-box position="0 1.55 -0.20" width="0.62" height="0.02" depth="0.16" ${M(CREAM_D)}></a-box>
     <a-box position="0 -0.05 -0.20" width="0.62" height="0.02" depth="0.16" ${M(CREAM_D)}></a-box>
-    ${Array.from({ length: 9 }, (_, i) => `<a-box position="-0.343 ${(0.42 + i * 0.065).toFixed(3)} -0.06" width="0.006" height="0.028" depth="0.30" ${M('#8d9aa0')}></a-box>`).join('')}
+    ${Array.from({ length: 9 }, (_, i) => `<a-box position="-0.343 ${(0.42 + i * 0.065).toFixed(3)} -0.06" width="0.006" height="0.028" depth="0.30" ${M('#94a3b8')}></a-box>`).join('')}
 
-    <a-entity data-part="keypad" glow="color:#10b981" data-explode="0 0.25 0.55">
+    <a-entity data-part="keypad" glow="color:#10b981" data-explode="0 0.1 0.4">
       <a-box position="0 1.28 0.36" width="0.52" height="0.30" depth="0.05" ${M(DARK)}></a-box>
-      <a-box position="0 1.36 0.388" width="0.44" height="0.11" depth="0.006" ${M('#0d0f11')}></a-box>
+      <a-box position="0 1.36 0.388" width="0.44" height="0.11" depth="0.006" ${M('#020617')}></a-box>
       <a-entity id="kpDisplay" position="0 1.36 0.394" th-label="text: 0.00; width:0.36; size:52; mono:true; color:#ef4444; bg:none; align:center"></a-entity>
-      <a-box position="-0.155 1.245 0.388" width="0.12" height="0.05" depth="0.012" ${M('#7f8b91')}></a-box>
-      <a-box position="-0.155 1.175 0.388" width="0.12" height="0.05" depth="0.012" ${M('#7f8b91')}></a-box>
-      <a-box position="0.005 1.245 0.388" width="0.10" height="0.05" depth="0.012" ${M('#9aa6ac')}></a-box>
-      <a-box position="0.005 1.175 0.388" width="0.10" height="0.05" depth="0.012" ${M('#9aa6ac')}></a-box>
-      <a-box id="btn3dRun" data-act="run" position="0.155 1.245 0.388" width="0.12" height="0.05" depth="0.014" ${M('#10b981')}></a-box>
-      <a-box id="btn3dStop" data-act="stop" position="0.155 1.175 0.388" width="0.12" height="0.05" depth="0.014" ${M('#ef4444')}></a-box>
-      <a-cylinder position="-0.20 1.06 0.36" radius="0.038" height="0.03" rotation="90 0 0" ${M('#9c8b7a')}></a-cylinder>
+      <a-box position="-0.155 1.245 0.388" width="0.12" height="0.05" depth="0.012" ${M('#64748b')}></a-box>
+      <a-box position="-0.155 1.175 0.388" width="0.12" height="0.05" depth="0.012" ${M('#64748b')}></a-box>
+      <a-box position="0.005 1.245 0.388" width="0.10" height="0.05" depth="0.012" ${M('#94a3b8')}></a-box>
+      <a-box position="0.005 1.175 0.388" width="0.10" height="0.05" depth="0.012" ${M('#94a3b8')}></a-box>
+      <a-box data-act="run" position="0.155 1.245 0.388" width="0.12" height="0.05" depth="0.016" ${M('#10b981')}></a-box>
+      <a-box data-act="stop" position="0.155 1.175 0.388" width="0.12" height="0.05" depth="0.016" ${M('#ef4444')}></a-box>
+      <a-cylinder position="-0.20 1.06 0.36" radius="0.038" height="0.03" rotation="90 0 0" ${M('#cbd5e1')}></a-cylinder>
     </a-entity>
 
-    <a-entity data-part="pcb" glow="color:#10b981" data-explode="0 0.45 0.35">
+    <a-entity data-part="pcb" glow="color:#10b981" data-explode="0 0.25 0.25">
       <a-box position="0 1.20 0.04" width="0.58" height="0.012" depth="0.44" ${M(GREEN)}></a-box>
-      <a-box position="-0.14 1.215 0.02" width="0.11" height="0.02" depth="0.09" ${M('#111111')}></a-box>
-      <a-box position="0.10 1.215 -0.06" width="0.07" height="0.018" depth="0.06" ${M('#111111')}></a-box>
-      <a-box position="0 1.06 0.20" width="0.50" height="0.055" depth="0.07" ${M('#2b6f4a')}></a-box>
-      ${Array.from({ length: 12 }, (_, i) => `<a-cylinder position="${(-0.225 + i * 0.041).toFixed(3)} 1.06 0.238" radius="0.013" height="0.008" rotation="90 0 0" ${M('#cfd6da')}></a-cylinder>`).join('')}
+      <a-box position="-0.14 1.215 0.02" width="0.11" height="0.02" depth="0.09" ${M('#0f172a')}></a-box>
+      <a-box position="0.10 1.215 -0.06" width="0.07" height="0.018" depth="0.06" ${M('#0f172a')}></a-box>
+      <a-box position="0 1.06 0.20" width="0.50" height="0.055" depth="0.07" ${M('#166534')}></a-box>
+      ${Array.from({ length: 12 }, (_, i) => `<a-cylinder position="${(-0.225 + i * 0.041).toFixed(3)} 1.06 0.238" radius="0.013" height="0.008" rotation="90 0 0" ${M('#e2e8f0')}></a-cylinder>`).join('')}
     </a-entity>
 
-    <a-entity data-part="partition" glow="color:#7dd3fc" data-explode="-0.45 0 0">
-      <a-box position="-0.11 0.52 -0.08" width="0.012" height="0.92" depth="0.44" ${M('#94a3b8', 0.55)}></a-box>
+    <a-entity data-part="partition" glow="color:#38bdf8" data-explode="-0.3 0 0">
+      <a-box position="-0.11 0.52 -0.08" width="0.012" height="0.92" depth="0.44" ${M('#94a3b8', 0.6)}></a-box>
     </a-entity>
-
-    <a-entity data-part="fan" glow="color:#7dd3fc" data-explode="-0.55 0 0">
+    
+    <a-entity data-part="fan" glow="color:#38bdf8" data-explode="-0.4 0 0">
       <a-cylinder position="-0.23 0.72 -0.08" radius="0.105" height="0.05" rotation="0 0 90" ${M('#334155')}></a-cylinder>
       <a-cylinder position="-0.23 0.42 -0.08" radius="0.105" height="0.05" rotation="0 0 90" ${M('#334155')}></a-cylinder>
-      <a-entity position="-0.255 0.72 -0.08" rotation="0 0 90"><a-entity spin="rate: 780">${[0, 72, 144, 216, 288].map(a => `<a-box rotation="0 ${a} 0" position="${(0.055 * Math.cos(a * Math.PI / 180)).toFixed(3)} 0 ${(0.055 * Math.sin(a * Math.PI / 180)).toFixed(3)}" width="0.09" height="0.006" depth="0.04" ${M('#cbd5e1')}></a-box>`).join('')}</a-entity></a-entity>
-      <a-entity position="-0.255 0.42 -0.08" rotation="0 0 90"><a-entity spin="rate: 780">${[0, 72, 144, 216, 288].map(a => `<a-box rotation="0 ${a} 0" position="${(0.055 * Math.cos(a * Math.PI / 180)).toFixed(3)} 0 ${(0.055 * Math.sin(a * Math.PI / 180)).toFixed(3)}" width="0.09" height="0.006" depth="0.04" ${M('#cbd5e1')}></a-box>`).join('')}</a-entity></a-entity>
+      <a-entity position="-0.255 0.72 -0.08" rotation="0 0 90"><a-entity spin="rate: 800">${[0, 72, 144, 216, 288].map(a => `<a-box rotation="0 ${a} 0" position="${(0.055 * Math.cos(a * Math.PI / 180)).toFixed(3)} 0 ${(0.055 * Math.sin(a * Math.PI / 180)).toFixed(3)}" width="0.09" height="0.006" depth="0.04" ${M('#e2e8f0')}></a-box>`).join('')}</a-entity></a-entity>
+      <a-entity position="-0.255 0.42 -0.08" rotation="0 0 90"><a-entity spin="rate: 800">${[0, 72, 144, 216, 288].map(a => `<a-box rotation="0 ${a} 0" position="${(0.055 * Math.cos(a * Math.PI / 180)).toFixed(3)} 0 ${(0.055 * Math.sin(a * Math.PI / 180)).toFixed(3)}" width="0.09" height="0.006" depth="0.04" ${M('#e2e8f0')}></a-box>`).join('')}</a-entity></a-entity>
     </a-entity>
 
-    <a-entity data-part="heatsink" glow="color:#ef4444" heat-tint data-explode="0.15 0 -0.5">
+    <a-entity data-part="heatsink" glow="color:#ef4444" heat-tint data-explode="0.1 0 -0.4">
       <a-box position="0.10 0.50 -0.12" width="0.34" height="0.80" depth="0.02" ${M('#64748b')}></a-box>
       ${Array.from({ length: 11 }, (_, i) => `<a-box position="0.10 ${(0.16 + i * 0.068).toFixed(3)} -0.22" width="0.34" height="0.014" depth="0.20" ${M('#94a3b8')}></a-box>`).join('')}
     </a-entity>
 
-    <a-entity data-part="rectifier" glow="color:#38bdf8" data-explode="0.5 -0.1 0.4">
+    <a-entity data-part="rectifier" glow="color:#0ea5e9" data-explode="0.4 -0.1 0.3">
       <a-box position="0.10 0.34 -0.03" width="0.22" height="0.13" depth="0.13" ${M('#0f172a')}></a-box>
       <a-box position="0.10 0.41 -0.03" width="0.18" height="0.012" depth="0.10" ${M('#ea580c')}></a-box>
     </a-entity>
 
-    <a-entity data-part="igbt" glow="color:#eab308" data-explode="0.5 0.15 0.4">
+    <a-entity data-part="igbt" glow="color:#eab308" data-explode="0.4 0.1 0.3">
       <a-box position="0.10 0.60 -0.03" width="0.24" height="0.15" depth="0.13" ${M('#020617')}></a-box>
       <a-box position="0.10 0.60 0.04" width="0.19" height="0.11" depth="0.008" ${M('#eab308')}></a-box>
     </a-entity>
 
-    <a-entity data-part="caps" glow="color:#f97316" data-explode="0.55 0.2 0.35">
+    <a-entity data-part="caps" glow="color:#f97316" data-explode="0.45 0.15 0.25">
       <a-box position="0.24 0.62 -0.05" width="0.012" height="0.62" depth="0.44" ${M(GREEN)}></a-box>
       <a-cylinder position="0.19 0.72 0.09" radius="0.075" height="0.28" rotation="0 0 90" ${M('#1e293b')}></a-cylinder>
       <a-cylinder position="0.19 0.72 -0.14" radius="0.075" height="0.28" rotation="0 0 90" ${M('#1e293b')}></a-cylinder>
       <a-box position="0.19 0.90 -0.02" width="0.16" height="0.012" depth="0.30" ${M('#ea580c')}></a-box>
-      <a-box position="0.19 0.54 -0.02" width="0.16" height="0.012" depth="0.30" ${M('#2563eb')}></a-box>
+      <a-box position="0.19 0.54 -0.02" width="0.16" height="0.012" depth="0.30" ${M('#3b82f6')}></a-box>
     </a-entity>
 
-    <a-entity data-part="emc" glow="color:#38bdf8" data-explode="0.3 0.5 0.35">
+    <a-entity data-part="emc" glow="color:#0ea5e9" data-explode="0.2 0.3 0.25">
       <a-torus position="0.05 0.95 0.10" radius="0.075" radius-tubular="0.026" rotation="0 90 0" ${M('#eab308')}></a-torus>
       <a-box position="-0.02 0.95 -0.12" width="0.16" height="0.10" depth="0.16" ${M('#1e293b')}></a-box>
     </a-entity>
 
-    <a-entity data-part="input" glow="color:#38bdf8" data-explode="-0.35 -0.35 0.4">
+    <a-entity data-part="input" glow="color:#0ea5e9" data-explode="-0.2 -0.2 0.3">
       <a-box position="-0.13 0.14 0.20" width="0.26" height="0.10" depth="0.12" ${M('#0f172a')}></a-box>
       ${[-0.21, -0.13, -0.05].map(x => `<a-cylinder position="${x} 0.14 0.262" radius="0.021" height="0.012" rotation="90 0 0" ${M('#cbd5e1')}></a-cylinder>`).join('')}
-      <a-entity position="-0.16 -0.08 0.28" billboard th-label="text: R S T (IN); width:0.3; size:24; accent:#38bdf8; bg:rgba(10,16,22,0.7)"></a-entity>
+      <a-entity position="-0.16 -0.08 0.28" billboard th-label="text: R S T (IN); width:0.3; size:24; accent:#0ea5e9; align:center"></a-entity>
     </a-entity>
-    <a-entity data-part="output" glow="color:#eab308" data-explode="0.35 -0.35 0.4">
+
+    <a-entity data-part="output" glow="color:#eab308" data-explode="0.2 -0.2 0.3">
       <a-box position="0.15 0.14 0.20" width="0.26" height="0.10" depth="0.12" ${M('#0f172a')}></a-box>
       ${[0.07, 0.15, 0.23].map(x => `<a-cylinder position="${x} 0.14 0.262" radius="0.021" height="0.012" rotation="90 0 0" ${M('#cbd5e1')}></a-cylinder>`).join('')}
-      <a-entity position="0.20 -0.08 0.28" billboard th-label="text: U V W (OUT); width:0.35; size:24; accent:#eab308; bg:rgba(10,16,22,0.7)"></a-entity>
+      <a-entity position="0.20 -0.08 0.28" billboard th-label="text: U V W (OUT); width:0.35; size:24; accent:#eab308; align:center"></a-entity>
     </a-entity>
 
-    <a-entity id="flowAC" energy-flow="tracks: ac; color:#38bdf8; count:6; speed:0.5; path: -0.13 0.09 0.26, -0.02 0.95 0.02, 0.10 0.34 0.06"></a-entity>
-    <a-entity id="flowDC" energy-flow="tracks: dc; color:#f97316; count:6; speed:0.6; path: 0.10 0.34 0.06, 0.19 0.54 0.02, 0.19 0.86 0.02, 0.19 0.60 0.06, 0.10 0.60 0.08"></a-entity>
-    <a-entity id="flowAirIn" energy-flow="tracks: air; shape: arrow; line: false; color:#7dd3fc; count:4; speed:0.42; size:0.026; path: 0.52 0.20 -0.22, 0.12 0.22 -0.22, 0.10 0.60 -0.22"></a-entity>
-    <a-entity id="flowAirOut" energy-flow="tracks: air; shape: arrow; line: false; color:#7dd3fc; count:4; speed:0.42; size:0.026; path: 0.10 0.72 -0.22, -0.23 0.72 -0.10, -0.60 0.80 -0.05"></a-entity>
+    <a-entity id="flowAC" energy-flow="tracks: ac; color:#0ea5e9; count:5; speed:0.6; path: -0.13 0.09 0.26, -0.02 0.95 0.02, 0.10 0.34 0.06"></a-entity>
+    <a-entity id="flowDC" energy-flow="tracks: dc; color:#f97316; count:6; speed:0.7; path: 0.10 0.34 0.06, 0.19 0.54 0.02, 0.19 0.86 0.02, 0.19 0.60 0.06, 0.10 0.60 0.08"></a-entity>
+    <a-entity id="flowAirIn" energy-flow="tracks: air; shape: arrow; line: false; color:#38bdf8; count:3; speed:0.5; size:0.026; path: 0.52 0.20 -0.22, 0.12 0.22 -0.22, 0.10 0.60 -0.22"></a-entity>
+    <a-entity id="flowAirOut" energy-flow="tracks: air; shape: arrow; line: false; color:#38bdf8; count:4; speed:0.5; size:0.026; path: 0.10 0.72 -0.22, -0.23 0.72 -0.10, -0.60 0.80 -0.05"></a-entity>
   </a-entity>
 
-  <a-entity id="motorGroup" position="0 0.38 1.15" rotation="0 90 0" data-part="motor" glow="color:#eab308">
+  <!-- มอเตอร์ (ย้ายมาไว้ใต้ VFD) -->
+  <a-entity id="motorGroup" position="0 -0.8 0" data-part="motor" glow="color:#eab308">
     <a-cylinder rotation="0 0 90" radius="0.28" height="0.56" ${M('#1e293b')}></a-cylinder>
     <a-cylinder position="-0.30 0 0" rotation="0 0 90" radius="0.29" height="0.05" ${M('#0f172a')}></a-cylinder>
     <a-cylinder position="0.30 0 0"  rotation="0 0 90" radius="0.29" height="0.05" ${M('#0f172a')}></a-cylinder>
     <a-box position="0 0.30 0" width="0.22" height="0.10" depth="0.18" ${M('#020617')}></a-box>
     <a-box position="0 -0.30 0" width="0.54" height="0.06" depth="0.36" ${M('#334155')}></a-box>
-    <a-entity rotation="0 0 90"><a-entity spin="rate: 420; fromFreq: true"><a-cylinder position="0 0.38 0" radius="0.055" height="0.26" ${M('#94a3b8')}></a-cylinder><a-box position="0 0.26 0" width="0.32" height="0.012" depth="0.05" ${M('#f1f5f9')}></a-box><a-box position="0 0.26 0" rotation="0 90 0" width="0.32" height="0.012" depth="0.05" ${M('#f1f5f9')}></a-box></a-entity></a-entity>
-    <a-entity id="motorLabel" position="0 -0.56 0" billboard th-label="text: มอเตอร์เหนี่ยวนำ 4 ขั้ว|0 rpm; width:0.5; size:24; accent:#eab308; bg:rgba(10,16,22,0.7); align:center"></a-entity>
+    <a-entity rotation="0 0 90">
+      <a-entity spin="rate: 420; fromFreq: true">
+        <a-cylinder position="0 0.38 0" radius="0.055" height="0.26" ${M('#94a3b8')}></a-cylinder>
+        <a-box position="0 0.26 0" width="0.32" height="0.012" depth="0.05" ${M('#f1f5f9')}></a-box>
+        <a-box position="0 0.26 0" rotation="0 90 0" width="0.32" height="0.012" depth="0.05" ${M('#f1f5f9')}></a-box>
+      </a-entity>
+    </a-entity>
+    <a-entity id="motorLabel" position="0 -0.5 0" billboard th-label="text: มอเตอร์เหนี่ยวนำ 4 ขั้ว|0 rpm; width:0.55; size:24; accent:#eab308; align:center"></a-entity>
   </a-entity>
 
-  <a-entity id="flowPWM" energy-flow="tracks: pwm; color:#eab308; count:7; speed:0.7; path: 0.10 0.45 -0.02, 0.15 0.14 0.30, 0.14 0.08 0.58, 0.03 0.30 0.85"></a-entity>
-</a-entity>
+  <!-- ทางเดินไฟ PWM จาก VFD ลงมอเตอร์ -->
+  <a-entity id="flowPWM" energy-flow="tracks: pwm; color:#eab308; count:7; speed:0.7; path: 0.10 1.00 0.04, 0.15 0.54 0.26, 0.15 -0.20 0.20, 0 -0.50 0.10"></a-entity>
+
+  <a-entity id="stepPlate" position="0 -1.6 0.4" rotation="-45 0 0" th-label="text: ; width:1.6; size:28; accent:#eab308; align:center"></a-entity>
 </a-entity>`;
         }
 
-        /* ---------------- ข้อมูล ---------------- */
-        const PARTS = { keypad: { n: 'คีย์แพดและจอแสดงผล', s: 5, d: 'จอ 7 ส่วนแสดงความถี่ กระแส หรือรอบมอเตอร์ ปุ่มเขียวคือ RUN ปุ่มแดงคือ STOP/RESET และปุ่มหมุนใช้ปรับความถี่ด้วยมือ ลองแตะปุ่มเขียวหรือแดงในภาพเพื่อสั่งเดินและหยุดจริง' }, pcb: { n: 'บอร์ดควบคุม', s: 5, d: 'ไมโครคอนโทรลเลอร์สร้างสัญญาณ PWM คำนวณโหมด V/F หรือ Sensorless Vector และดูแลระบบป้องกันทั้งหมด ด้านหน้าเป็นแถวขั้วสัญญาณสำหรับต่ออินพุตดิจิทัล อนาล็อก และ RS-485' }, partition: { n: 'ผนังกั้นช่องลม', s: 7, d: 'แผ่นกั้นที่แยกทางลมออกจากห้องวงจร ทำให้ฝุ่นและละอองที่ไหลผ่านครีบไม่เข้าไปเกาะบนแผงอิเล็กทรอนิกส์ เป็นเหตุผลที่ AC10 ทนสภาพแวดล้อมโรงงานได้ดี' }, fan: { n: 'พัดลมระบายความร้อน', s: 7, d: 'พัดลมสองตัวดูดอากาศผ่านครีบฮีตซิงก์แล้วเป่าออกด้านข้าง ทำงานเฉพาะเมื่ออุณหภูมิถึงเกณฑ์เพื่อยืดอายุพัดลม ถ้าอุดตันจะเกิดความผิดพลาด E.oH' }, heatsink: { n: 'ฮีตซิงก์', s: 7, d: 'อะลูมิเนียมครีบรับความร้อนจากไดโอดและ IGBT ที่ยึดติดอยู่ สีในภาพจะเปลี่ยนเป็นแดงเมื่อโหลดสูงขึ้น ตัวเครื่องทำงานได้ถึง 50°C โดยไม่ต้องลดทอนกำลัง' }, rectifier: { n: 'ไดโอดบริดจ์เรียงกระแส', s: 2, d: 'แปลงไฟสลับเป็นไฟตรง ใช้ไดโอด 6 ตัวสำหรับไฟ 3 เฟส แรงดันบัส DC ที่ได้ประมาณ 1.35 เท่าของแรงดันไฟเข้า จึงเป็นจุดที่ร้อนมากและต้องยึดบนฮีตซิงก์' }, igbt: { n: 'โมดูล IGBT', s: 4, d: 'หัวใจของอินเวอร์เตอร์ สวิตช์ 6 ตัวสลับต่อขั้วบวกลบของบัส DC เข้ากับสาย U V W ด้วยความถี่สวิตชิ่งระดับกิโลเฮิรตซ์ ความกว้างพัลส์ที่แปรตามเวลาทำให้กระแสในมอเตอร์เป็นรูปคลื่นไซน์' }, caps: { n: 'คาปาซิเตอร์บัส DC', s: 3, d: 'กรองระลอกคลื่นให้ไฟตรงเรียบและเก็บพลังงานสำรองไว้จ่ายตอนโหลดกระชาก อันตรายที่สุดในเครื่อง เพราะยังเก็บประจุหลังตัดไฟ ต้องรอและวัดแรงดันให้เป็นศูนย์ก่อนสัมผัส' }, emc: { n: 'โช้กและตัวกรอง EMC', s: 1, d: 'ลดสัญญาณรบกวนความถี่สูงที่เกิดจากการสวิตช์ ไม่ให้ย้อนกลับไปรบกวนอุปกรณ์อื่นในสายเมน โช้กวงแหวนยังช่วยลดฮาร์มอนิกของกระแสด้านไฟเข้า' }, input: { n: 'ขั้วไฟเข้า R S T', s: 1, d: 'จุดต่อไฟเมน รุ่น 1 เฟส 220 V รองรับ 0.75–2.2 kW ส่วนรุ่น 3 เฟส 380 V รองรับได้ถึง 22 kW ห้ามสลับกับขั้วเอาต์พุตเด็ดขาด เพราะจะทำให้โมดูลกำลังพังทันที' }, output: { n: 'ขั้วเอาต์พุต U V W', s: 6, d: 'จ่ายไฟ PWM ให้มอเตอร์ สลับสายสองเส้นใดก็ได้เพื่อกลับทิศหมุน ห้ามต่อคาปาซิเตอร์แก้เพาเวอร์แฟกเตอร์ที่ด้านนี้ และไม่ควรใช้สายยาวเกินคู่มือกำหนดเพราะจะเกิดแรงดันสะท้อน' }, motor: { n: 'มอเตอร์เหนี่ยวนำ', s: 6, d: 'ความเร็วรอบซิงโครนัส n = 120 × f ÷ จำนวนขั้ว มอเตอร์ 4 ขั้วที่ 50 Hz จึงได้ 1500 rpm ความเร็วจริงจะต่ำกว่านี้เล็กน้อยตามค่าสลิป ลองปรับความถี่แล้วดูเพลาหมุนเปลี่ยนไป' } };
-        const FAULTS = { oC: { code: 'E.oC', n: 'กระแสเกิน (Over Current)', part: 'igbt', d: 'กระแสเอาต์พุตพุ่งเกินพิกัด มักเกิดจากตั้งเวลาเร่งสั้นเกินไป โหลดติดขัด หรือสายมอเตอร์ลัดวงจร แก้โดยยืดเวลาเร่ง ตรวจโหลดที่หมุนฝืด และวัดความต้านทานขดลวด' }, oU: { code: 'E.oU', n: 'แรงดันบัสเกิน (Over Voltage)', part: 'caps', d: 'มอเตอร์ชะลอตัวเร็วเกินไปจนคายพลังงานกลับเข้าบัส DC ทำให้แรงดันพุ่ง แก้โดยยืดเวลาชะลอ เปิดฟังก์ชันป้องกันแรงดันเกินขณะชะลอ หรือติดตั้งตัวต้านทานเบรก' }, oH: { code: 'E.oH', n: 'ความร้อนเกิน (Over Heat)', part: 'heatsink', d: 'อุณหภูมิฮีตซิงก์สูงเกินเกณฑ์ ตรวจว่าพัดลมยังหมุน ครีบระบายมีฝุ่นอุดตันหรือไม่ อุณหภูมิในตู้สูงเกิน 50°C หรือติดตั้งชิดกันจนลมระบายไม่ออก' }, LU: { code: 'E.LU', n: 'แรงดันตก (Under Voltage)', part: 'input', d: 'แรงดันไฟเข้าตกต่ำกว่าเกณฑ์ อาจเกิดจากไฟตกชั่วขณะ สายเมนเล็กเกินไป หรือมีโหลดใหญ่สตาร์ทพร้อมกัน AC10 มีฟังก์ชันประคองไม่ให้หยุดทันทีเมื่อไฟตกชั่วครู่' } };
-        const STEPS = [{ t: 'ภาพรวมการทำงาน', d: 'AC10 รับไฟ AC ความถี่คงที่จากสายเมน แปลงเป็นไฟ DC แล้วสร้างไฟ AC ขึ้นใหม่ที่ปรับแรงดันและความถี่ได้ เพื่อควบคุมความเร็วรอบมอเตอร์เหนี่ยวนำ ใช้กับพัดลม ปั๊มน้ำ สายพานลำเลียง และเครื่องจักรอัตโนมัติ', s: 'เส้นทางพลังงาน: R S T → เรียงกระแส → บัส DC → IGBT → U V W → มอเตอร์ • ประสิทธิภาพรวม ≥ 96%', p: [], f: { ac: 1, dc: 1, pwm: 1 } }, { t: 'ไฟเข้าและตัวกรองสัญญาณรบกวน', d: 'ไฟจ่ายเข้าที่ขั้วด้านล่างของตัวเครื่อง ผ่านโช้กวงแหวนและตัวกรอง EMC เพื่อลดสัญญาณรบกวนที่จะย้อนกลับเข้าสายเมน', s: 'รุ่น 1 เฟส 220 V ครอบคลุม 0.75–2.2 kW (4–10 A) รุ่น 3 เฟส 380 V ครอบคลุม 0.75–22 kW', p: ['input', 'emc'], f: { ac: 1 } }, { t: 'วงจรเรียงกระแส แปลง AC เป็น DC', d: 'ไดโอดบริดจ์ที่ยึดอยู่บนฮีตซิงก์เรียงไฟสลับให้เป็นไฟตรงแบบมีระลอกคลื่น แรงดันบัส DC ที่ได้ประมาณ 1.35 เท่าของแรงดันไฟเข้า', s: 'ไฟเข้า 380 V จะได้บัส DC ราว 513 V ดูจอด้านซ้าย: ไซน์สามเฟสกลายเป็นไฟตรง 6 พัลส์', p: ['rectifier'], f: { ac: 1 } }, { t: 'บัส DC และคาปาซิเตอร์', d: 'คาปาซิเตอร์อิเล็กโทรไลติกบนบอร์ดกำลังกรองระลอกคลื่นให้ไฟตรงเรียบและเก็บพลังงานสำรอง มีวงจรพรีชาร์จจำกัดกระแสพุ่งตอนเปิดเครื่อง', s: 'อันตราย: คาปาซิเตอร์ยังเก็บประจุหลังตัดไฟ ต้องรออย่างน้อย 5 นาทีและวัดแรงดันให้เป็นศูนย์ก่อนสัมผัส', p: ['caps'], f: { dc: 1 } }, { t: 'อินเวอร์เตอร์ IGBT สร้างไฟ AC ใหม่', d: 'IGBT หกตัวสลับต่อขั้วบวกและลบของบัส DC เข้ากับสาย U V W ด้วยเทคนิค PWM ความกว้างพัลส์ที่เปลี่ยนไปทำให้กระแสในขดลวดมอเตอร์มีรูปคลื่นใกล้เคียงไซน์', s: 'ความถี่สวิตชิ่งปรับได้ราว 2–16 kHz ตั้งสูงมอเตอร์เงียบขึ้นแต่ IGBT ร้อนขึ้น', p: ['igbt'], f: { dc: 1, pwm: 1 } }, { t: 'บอร์ดควบคุมและคีย์แพด', d: 'ไมโครคอนโทรลเลอร์คำนวณจังหวะจุดชนวน IGBT ได้สองโหมด คือ V/F ที่เพิ่มแรงดันตามความถี่แบบสัดส่วน และ Sensorless Vector Control ที่ประมาณฟลักซ์ในมอเตอร์เพื่อคุมแรงบิดได้แม่นยำโดยไม่ต้องใช้เอ็นโคดเดอร์', s: 'โหมดเวกเตอร์ให้แรงบิดสตาร์ทถึง 150% ที่ความถี่เพียง 0.5 Hz เหมาะกับโหลดที่ออกตัวหนัก', p: ['pcb', 'keypad'], f: {} }, { t: 'เอาต์พุตสู่มอเตอร์', d: 'ไฟ PWM ออกที่ขั้ว U V W ความเร็วรอบซิงโครนัสคำนวณจาก n = 120 × f ÷ จำนวนขั้ว ลองกด RUN แล้วดูความถี่ค่อย ๆ ไต่ขึ้นตามเวลาเร่งที่ตั้งไว้ พร้อมเพลามอเตอร์และรูปคลื่นที่เปลี่ยนตาม', s: 'AC10 จ่ายได้ 0–599 Hz เกิน 50 Hz แรงบิดจะลดลงเพราะแรงดันเพิ่มตามไม่ได้แล้ว', p: ['output', 'motor'], f: { pwm: 1 } }, { t: 'ช่องลมอิสระและการระบายความร้อน', d: 'ผนังกั้นแยกห้องลมออกจากห้องวงจร อากาศเย็นถูกดูดเข้าด้านหลัง ผ่านครีบฮีตซิงก์ที่รับความร้อนจากไดโอดและ IGBT แล้วพัดลมคู่เป่าออก ฝุ่นและละอองจึงไม่เข้าไปเกาะแผงวงจร', s: 'ทำงานได้ถึง 50°C โดยไม่ลดทอนกำลัง ติดตั้งเรียงชิดกันได้ ประหยัดพื้นที่ตู้ถึง 60% และยึดบนราง DIN ได้', p: ['heatsink', 'fan', 'partition'], f: { air: 1 } }, { t: 'ระบบป้องกันในตัว', d: 'วงจรตรวจจับกระแสจำกัดรูปคลื่นแบบ wave-by-wave ตัดยอดกระแสทีละลูกคลื่นเพื่อกันไฟกระชากตอนเร่ง มีการป้องกันแรงดันเกิน แรงดันตกชั่วขณะ มอเตอร์โอเวอร์โหลด และเอาต์พุตลัดวงจรลงดิน', s: 'เปิดเมนูตั้งค่าขั้นสูงแล้วกดปุ่มจำลองความผิดพลาด เพื่อดูรหัสบนจอและวิธีแก้ไขแต่ละกรณี', p: ['igbt', 'pcb'], f: { dc: 1, pwm: 1 } }];
+        /* ---------------- ข้อมูลและลอจิก ---------------- */
+        const PARTS = {
+            keypad: { n: 'คีย์แพดและจอแสดงผล', s: 5, d: 'จอแสดงผล 7-Segment แสดงค่าความถี่ กระแส หรือรอบมอเตอร์ มีปุ่ม RUN/STOP เพื่อสั่งการทำงาน ลองแตะปุ่มในภาพดูสิ!' },
+            pcb: { n: 'บอร์ดควบคุม (Control Board)', s: 5, d: 'หัวใจสมองกล ไมโครคอนโทรลเลอร์ประมวลผลอัลกอริทึม V/F หรือ Vector Control เพื่อสร้างสัญญาณจุดชนวน PWM พร้อมดูแลเซ็นเซอร์ป้องกันความผิดพลาดทั้งหมด' },
+            partition: { n: 'ผนังกั้นช่องลม (Air Duct)', s: 7, d: 'แผ่นกั้นที่แยกทางเดินลมระบายความร้อน ออกจากห้องวงจรอิเล็กทรอนิกส์ ช่วยป้องกันฝุ่นและละอองน้ำมันไม่ให้เกาะบนบอร์ด ยืดอายุการใช้งาน' },
+            fan: { n: 'พัดลมระบายความร้อน', s: 7, d: 'พัดลมคู่ดูดอากาศเย็นจากภายนอกเป่าผ่านครีบฮีตซิงก์ ทำงานอัตโนมัติเมื่ออุณหภูมิถึงเกณฑ์ หากพัดลมเสียจะเกิด Fault E.oH (Over Heat)' },
+            heatsink: { n: 'ฮีตซิงก์ระบายความร้อน', s: 7, d: 'แผงอะลูมิเนียมขนาดใหญ่ รับความร้อนมหาศาลจากโมดูลไดโอดและ IGBT สีในโมเดลจะแดงขึ้นเมื่อโหลดทำงานหนัก' },
+            rectifier: { n: 'วงจรเรียงกระแส (Rectifier)', s: 2, d: 'โมดูลไดโอดบริดจ์ แปลงไฟฟ้ากระแสสลับ (AC) จากสายเมน ให้กลายเป็นกระแสตรง (DC) เป็นจุดที่เกิดความร้อนสูงมาก' },
+            igbt: { n: 'โมดูลสวิตชิ่ง (IGBT)', s: 4, d: 'สวิตช์อิเล็กทรอนิกส์กำลังสูง 6 ตัว สลับเปิดปิดแรงดันบัส DC เข้าสู่สายมอเตอร์ด้วยความถี่สูง (PWM) เพื่อสร้างรูปคลื่นไซน์เทียม ควบคุมความเร็วมอเตอร์' },
+            caps: { n: 'คาปาซิเตอร์บัส DC', s: 3, d: 'ตัวเก็บประจุขนาดใหญ่ กรองกระแสตรงให้เรียบเนียน และเก็บพลังงานสำรอง เป็นจุดอันตรายที่สุดเพราะยังมีไฟแรงสูงค้างอยู่แม้ปิดเครื่องแล้ว' },
+            emc: { n: 'ตัวกรองสัญญาณรบกวน (EMC)', s: 1, d: 'ขดลวดโช้กช่วยลดฮาร์มอนิก และฟิลเตอร์ป้องกันสัญญาณรบกวนความถี่สูงที่เกิดจากการสวิตชิ่ง ไม่ให้ไหลย้อนกลับไปกวนอุปกรณ์อื่น' },
+            input: { n: 'เทอร์มินอลไฟเข้า (R, S, T)', s: 1, d: 'จุดต่อสายไฟเมนเข้าเครื่อง รองรับไฟ 3 เฟส 380V ข้อควรระวัง: ห้ามต่อสายเมนเข้าช่องเอาต์พุต (U,V,W) เด็ดขาด เพราะ IGBT จะระเบิดทันที' },
+            output: { n: 'เทอร์มินอลมอเตอร์ (U, V, W)', s: 6, d: 'จุดจ่ายไฟ PWM ออกไปหามอเตอร์ หากต้องการกลับทิศทางหมุนมอเตอร์ ให้สลับสาย 2 เส้นใดๆ ในนี้ ไม่ควรเดินสายยาวเกินพิกัด' },
+            motor: { n: 'มอเตอร์เหนี่ยวนำ 3 เฟส', s: 6, d: 'ความเร็วรอบของมอเตอร์แปรผันตรงกับความถี่ (Hz) ที่ VFD จ่ายให้ (RPM ≈ 120 × Hz / จำนวนขั้ว) ลองปรับแถบเลื่อนความถี่ดูการตอบสนอง' }
+        };
+
+        const FAULTS = {
+            oC: { code: 'E.oC', n: 'กระแสเกิน (Over Current)', part: 'igbt', d: 'กระแสพุ่งสูงเกินพิกัด มักเกิดจากตั้งเวลาเร่งเร็วเกินไป โหลดหนักลูกปืนแตก หรือสายมอเตอร์ช็อต' },
+            oU: { code: 'E.oU', n: 'แรงดันเกิน (Over Voltage)', part: 'caps', d: 'เกิดเมื่อสั่งหยุดมอเตอร์ที่มีแรงเฉื่อยสูงเร็วเกินไป มอเตอร์จะกลายเป็นเครื่องปั่นไฟดันแรงดันกลับเข้าบัส DC' },
+            oH: { code: 'E.oH', n: 'เครื่องร้อนจัด (Over Heat)', part: 'heatsink', d: 'อุณหภูมิฮีตซิงก์สูงเกินพิกัดปลอดภัย เช็คพัดลมระบายอากาศว่าหมุนไหม หรือมีฝุ่นตันตามครีบ' },
+            LU: { code: 'E.LU', n: 'แรงดันไฟตก (Under Voltage)', part: 'input', d: 'ไฟเมนขาเข้าตกต่ำกว่าเกณฑ์ หรือไฟกระพริบชั่วขณะ เครื่องจะหยุดทำงานเพื่อป้องกันบอร์ดพัง' }
+        };
+
+        const STEPS = [
+            { t: 'หลักการทำงาน VFD', d: 'รับไฟ AC ความถี่คงที่ แปลงเป็น DC แล้วสร้าง AC ใหม่ที่ปรับความถี่ได้ เพื่อคุมความเร็วมอเตอร์', s: 'R S T → Rectifier → DC Bus → IGBT → มอเตอร์', p: [], f: { ac: 1, dc: 1, pwm: 1 } },
+            { t: 'ภาคไฟเข้า & ตัวกรอง', d: 'รับไฟจากสายเมน ผ่านวงจรฟิลเตอร์เพื่อลดสัญญาณรบกวนไม่ให้ย้อนไปกวนอุปกรณ์อื่น', s: 'Input: 3 Phase 380V 50/60Hz', p: ['input', 'emc'], f: { ac: 1 } },
+            { t: 'แปลง AC เป็น DC', d: 'Diode Bridge ทำหน้าที่เรียงกระแสไฟสลับให้กลายเป็นไฟตรง', s: 'VDC ≈ 1.35 × VAC (ประมาณ 513V สำหรับไฟ 380V)', p: ['rectifier'], f: { ac: 1 } },
+            { t: 'กรองไฟ DC ให้เรียบ', d: 'คาปาซิเตอร์เก็บและจ่ายกระแสให้เรียบเนียน', s: '⚠️ อันตราย มีไฟแรงสูงค้างอยู่แม้สับคัตเอาต์แล้ว', p: ['caps'], f: { dc: 1 } },
+            { t: 'สร้างไฟ AC ด้วย IGBT', d: 'สวิตช์อิเล็กทรอนิกส์สับเปลี่ยนขั้วไฟด้วยความถี่สูง (PWM) เพื่อสร้างรูปคลื่นไซน์จำลอง', s: 'Switching Frequency: 2kHz - 16kHz', p: ['igbt'], f: { dc: 1, pwm: 1 } },
+            { t: 'สมองกลควบคุม', d: 'ชิปประมวลผลอัลกอริทึม Vector Control รักษารอบและแรงบิดให้คงที่', s: 'สั่งการและแสดงผลผ่าน Keypad หน้าเครื่อง', p: ['pcb', 'keypad'], f: {} },
+            { t: 'ขับเคลื่อนมอเตอร์', d: 'จ่ายไฟ PWM หามอเตอร์ ความถี่(Hz)เปลี่ยน ความเร็วรอบก็เปลี่ยนตาม', s: 'Output Frequency: 0 - 599 Hz', p: ['output', 'motor'], f: { pwm: 1 } },
+            { t: 'ระบบระบายความร้อน', d: 'แยกช่องลมอิสระ พัดลมดูดอากาศผ่านฮีตซิงก์โดยไม่ให้ฝุ่นโดนแผงวงจร', s: 'ดีไซน์แคบ (Book Shape) วางชิดกันได้ประหยัดพื้นที่', p: ['heatsink', 'fan', 'partition'], f: { air: 1 } }
+        ];
 
         (function () {
             const $ = s => document.querySelector(s);
             let step = 0, autoplay = true, timer = null, exploded = false, cutaway = true, mounted = 'marker';
-            let userYaw = 0, userScale = 0.6;
+            let userYaw = 0, rotX = 0, userScale = 0.75;
 
             const buzz = ms => { if (navigator.vibrate) navigator.vibrate(ms); };
 
-            let faceCam = true, wallMode = false;
-            function applyFaceCam() {
-                const m = $('#modelRoot');
-                if (!m) return;
-                const on = faceCam && !wallMode;      // marker ตั้งบนจอแล้วหมุนรอบแกนตั้งไม่มีความหมาย
-                m.setAttribute('face-cam', 'enabled', on);
-                if (!on) m.setAttribute('rotation', `0 ${userYaw} 0`);
-            }
-            function applyTilt() {
-                const t = $('#tiltRoot');
-                if (t) t.setAttribute('rotation', wallMode ? '-90 0 0' : '0 0 0');
-                $('#btnTilt').textContent = wallMode
-                    ? 'marker อยู่บนจอ · แตะเพื่อสลับเป็นบนโต๊ะ'
-                    : 'marker วางบนโต๊ะ · แตะเพื่อสลับเป็นบนจอ';
-                $('#btnTilt').classList.toggle('on', wallMode);
-                $('#btnFace').style.opacity = wallMode ? 0.4 : 1;
-                applyFaceCam();
-            }
-            $('#btnTilt').onclick = () => { wallMode = !wallMode; applyTilt(); buzz(14); };
-            $('#btnFace').onclick = () => {
-                faceCam = !faceCam;
-                $('#btnFace').classList.toggle('on', faceCam);
-                applyFaceCam(); buzz(12);
-            };
-
-            function mount(where) {
-                const marker = $('#markerRoot'), preview = $('#previewRoot');
+            function mount(mode) {
+                const marker = $('#mount-marker'), preview = $('#mount-preview');
                 marker.innerHTML = ''; preview.innerHTML = '';
-                (where === 'marker' ? marker : preview).innerHTML = buildModel();
-                mounted = where; userYaw = 0;
+                (mode === 'marker' ? marker : preview).innerHTML = buildModel();
+                mounted = mode; userYaw = 0; rotX = 0;
+
                 setTimeout(() => {
                     const m = $('#modelRoot');
-                    if (m && where === 'preview') m.setAttribute('position', '-0.05 -0.85 0');
-                    const auto = where === 'preview' ? (window.innerHeight < 800 ? 0.5 : 0.6) : 0.7;
-                    $('#size').value = auto;
-                    applyStep(); applySize(auto); applyCutaway(); applyExplode(); applyTilt();
-                }, 130);
+                    if (m && mode === 'preview') {
+                        m.setAttribute('position', '0 0 -4.0');
+                        userScale = window.innerHeight < 800 ? 0.6 : 0.75;
+                    } else if (m) {
+                        m.setAttribute('position', '0 -0.2 0');
+                        userScale = 0.75;
+                    }
+                    $('#inSize').value = userScale;
+                    applyStep(); applySize(userScale); applyCutaway(); applyExplode();
+                }, 100);
             }
 
-            const track = $('#track'); STEPS.forEach(() => track.appendChild(document.createElement('i')));
+            const dots = $('#track');
+            STEPS.forEach(() => { const d = document.createElement('i'); dots.appendChild(d); });
 
             function applyStep() {
                 const st = STEPS[step];
-                $('#stepno').textContent = String(step + 1).padStart(2, '0');
-                $('#steptitle').textContent = st.t;
-                $('#stepdesc').textContent = st.d;
-                $('#stepspec').textContent = st.s || '';
-                [...track.children].forEach((el, i) => el.classList.toggle('on', i <= step));
+                $('#step-num').textContent = String(step + 1).padStart(2, '0');
+                $('#step-title').textContent = st.t;
+                $('#step-desc').textContent = st.d;
+                $('#step-spec').textContent = st.s || '';
+                [...dots.children].forEach((el, i) => el.className = i <= step ? 'on' : '');
 
-                const plate = $('#stepPlate');
-                if (plate) plate.setAttribute('th-label', 'text', `${step + 1}. ${st.t}`);
+                const sp = $('#stepPlate');
+                if (sp) sp.setAttribute('th-label', 'text', `Step ${step + 1}: ${st.t}`);
 
-                highlight(st.p);
+                document.querySelectorAll('[data-part]').forEach(el => {
+                    if (!el.components || !el.components.glow) return;
+                    el.setAttribute('glow', 'active', (st.p || []).includes(el.dataset.part));
+                    el.setAttribute('glow', 'color', '#0ea5e9');
+                });
 
                 const f = st.f || {};
-                const setFlow = (id, on) => { const e = $(id); if (e) e.setAttribute('energy-flow', 'enabled', !!on); };
-                setFlow('#flowAC', f.ac); setFlow('#flowDC', f.dc); setFlow('#flowPWM', f.pwm);
-                setFlow('#flowAirIn', f.air); setFlow('#flowAirOut', f.air);
+                const setF = (id, on) => { const e = $(id); if (e) e.setAttribute('energy-flow', 'enabled', !!on); };
+                setF('#flowAC', f.ac); setF('#flowDC', f.dc); setF('#flowPWM', f.pwm);
+                setF('#flowAirIn', f.air); setF('#flowAirOut', f.air);
             }
 
-            function highlight(list, color) { document.querySelectorAll('[data-part]').forEach(el => { if (!el.components || !el.components.glow) return; const on = (list || []).includes(el.dataset.part); el.setAttribute('glow', 'active', on); if (on && color) el.setAttribute('glow', 'color', color); }); }
-            function go(n) { step = (n + STEPS.length) % STEPS.length; applyStep(); }
-            function setAutoplay(on) { autoplay = on; $('#play').classList.toggle('on', on); $('#play').textContent = on ? '❚❚ หยุดออโต้' : '▶ เล่นออโต้'; clearInterval(timer); if (on) timer = setInterval(() => go(step + 1), 9000); }
+            function goStep(n) { step = (n + STEPS.length) % STEPS.length; applyStep(); }
+            function setAutoplay(on) {
+                autoplay = on; $('#btnPlay').classList.toggle('active', on);
+                $('#btnPlay').textContent = on ? '❚❚ หยุดออโต้' : '▶ เล่นออโต้';
+                clearInterval(timer); if (on) timer = setInterval(() => goStep(step + 1), 9000);
+            }
 
-            $('#next').onclick = () => { setAutoplay(false); go(step + 1); };
-            $('#prev').onclick = () => { setAutoplay(false); go(step - 1); };
-            $('#play').onclick = () => setAutoplay(!autoplay);
+            $('#btnPrev').onclick = () => { setAutoplay(false); goStep(step - 1); buzz(10); };
+            $('#btnNext').onclick = () => { setAutoplay(false); goStep(step + 1); buzz(10); };
+            $('#btnPlay').onclick = () => { setAutoplay(!autoplay); buzz(10); };
 
-            let folded = false;
-            function setFold(v) { folded = v; $('#dockCard').classList.toggle('folded', v); $('#btnFold').style.transform = v ? 'rotate(180deg)' : 'rotate(0deg)'; }
-            $('#btnFoldHandle').onclick = () => { setFold(!folded); buzz(12); };
-            $('#btnFold').onclick = () => { setFold(!folded); buzz(12); };
-            setFold(window.innerHeight < 850);
+            let folded = window.innerHeight < 800;
+            function toggleFold(force) {
+                folded = force !== undefined ? force : !folded;
+                $('#dockCard').classList.toggle('folded', folded);
+            }
+            $('#btnFoldHandle').onclick = () => { toggleFold(); buzz(10); };
+            $('#btnFold').onclick = () => { toggleFold(); buzz(10); };
+            if (folded) toggleFold(true);
 
-            $('#btnMore').onclick = () => { $('#more').classList.toggle('show'); $('#btnMore').classList.toggle('on'); };
-            $('#btnFlow').onclick = () => { VFD.flow = !VFD.flow; $('#btnFlow').classList.toggle('on', VFD.flow); };
+            $('#btnMore').onclick = () => {
+                $('#more').classList.toggle('show');
+                if ($('#more').classList.contains('show')) setTimeout(() => $('#more').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+            };
 
-            function setRunning(on) { if (on && VFD.fault) return; VFD.running = on; $('#btnRun').classList.toggle('on', on); buzz(on ? 18 : 12); }
+            function setRunning(on) { if (on && VFD.fault) return; VFD.running = on; $('#btnRun').classList.toggle('active', on); $('#btnStop').classList.toggle('active', !on); buzz(on ? 20 : 15); }
             $('#btnRun').onclick = () => setRunning(true);
-            $('#btnStop').onclick = () => setRunning(false);
+            $('#btnStop').onclick = () => { setRunning(false); $('#btnRun').classList.remove('active'); };
 
             function trigFault(key) {
                 const f = FAULTS[key]; VFD.fault = key; VFD.running = false;
-                $('#btnRun').classList.remove('on'); $('#meter').classList.add('fault');
-                $('#faultmsg').innerHTML =
-                    `<div class="fault-head"><b>${f.code}</b><span>${f.n}</span></div>` +
-                    `<div class="fault-body">${f.d}</div>` +
-                    `<button id="btnToastReset">รับทราบและรีเซ็ต</button>`;
-                $('#faultbar').classList.add('show');
+                $('#btnRun').classList.remove('active'); $('#btnStop').classList.add('active');
+                $('#meter').classList.add('fault');
+                $('#fault-code').textContent = f.code; $('#fault-title').textContent = f.n; $('#fault-desc').textContent = f.d;
+                $('#toast-error').classList.add('show');
                 if (key === 'oH') VFD.heat = 1;
-                highlight([f.part], '#ef4444'); setAutoplay(false); buzz([40, 60, 40]);
-                $('#btnToastReset').onclick = () => { clearFault(); setRunning(true); };
+
+                document.querySelectorAll('[data-part]').forEach(el => {
+                    if (el.components && el.components.glow) el.setAttribute('glow', 'active', false);
+                });
+                const bp = document.querySelector(`[data-part="${f.part}"]`);
+                if (bp) { bp.setAttribute('glow', 'active', true); bp.setAttribute('glow', 'color', '#ef4444'); }
+
+                setAutoplay(false); buzz([50, 50, 50]);
             }
-            function clearFault() { VFD.fault = null; $('#meter').classList.remove('fault'); $('#faultbar').classList.remove('show'); applyStep(); }
-            document.querySelectorAll('[data-fault]').forEach(b => b.onclick = () => trigFault(b.dataset.fault));
+            function clearFault() { VFD.fault = null; $('#meter').classList.remove('fault'); $('#toast-error').classList.remove('show'); applyStep(); buzz(15); }
+            document.querySelectorAll('.btn-sm').forEach(b => b.onclick = () => trigFault(b.dataset.fault));
+            $('#btnToastReset').onclick = () => { clearFault(); setRunning(true); };
 
-            $('#freq').addEventListener('input', e => { VFD.target = +e.target.value; $('#freqval').textContent = VFD.target.toFixed(1) + ' Hz'; });
-            $('#accel').addEventListener('input', e => { VFD.ramp = +e.target.value; $('#accelval').textContent = VFD.ramp.toFixed(1) + ' s'; });
-            function applySize(v) { userScale = v; const m = $('#modelRoot'); if (m) m.setAttribute('scale', `${v} ${v} ${v}`); $('#sizeval').textContent = (+v).toFixed(2) + '×'; }
-            $('#size').addEventListener('input', e => applySize(+e.target.value));
+            $('#inFreq').addEventListener('input', e => { VFD.target = +e.target.value; $('#valFreq').textContent = VFD.target.toFixed(1) + ' Hz'; });
+            $('#inAccel').addEventListener('input', e => { VFD.ramp = +e.target.value; $('#valAccel').textContent = VFD.ramp.toFixed(1) + ' s'; });
+            function applySize(v) { const m = $('#modelRoot'); if (m) m.setAttribute('scale', `${v} ${v} ${v}`); $('#valSize').textContent = Number(v).toFixed(2) + 'x'; }
+            $('#inSize').addEventListener('input', e => applySize(+e.target.value));
 
-            function applyCutaway() { const s = $('#shellFront'); if (s) s.setAttribute('material', 'opacity', cutaway ? 0.1 : 0.95); }
-            $('#btnCut').onclick = () => { cutaway = !cutaway; $('#btnCut').classList.toggle('on', cutaway); $('#btnCut').textContent = cutaway ? 'เปิดฝาดู' : 'ปิดฝาเครื่อง'; applyCutaway(); };
-            function applyExplode() { document.querySelectorAll('[data-explode]').forEach(el => { if (!el.dataset.base) { const p = el.getAttribute('position') || { x: 0, y: 0, z: 0 }; el.dataset.base = `${p.x} ${p.y} ${p.z}`; } const b = el.dataset.base.split(' ').map(Number); const o = el.dataset.explode.split(' ').map(Number); const to = exploded ? `${b[0] + o[0]} ${b[1] + o[1]} ${b[2] + o[2]}` : el.dataset.base; el.setAttribute('animation__ex', { property: 'position', to, dur: 650, easing: 'easeOutCubic' }); }); }
-            $('#btnExp').onclick = () => { exploded = !exploded; $('#btnExp').classList.toggle('on', exploded); applyExplode(); buzz(15); };
+            function applyCutaway() { const s = $('#shellFront'); if (s) s.setAttribute('material', 'opacity', cutaway ? 0.15 : 0.95); }
+            $('#btnCut').onclick = () => { cutaway = !cutaway; $('#btnCut').classList.toggle('active', cutaway); applyCutaway(); buzz(10); };
+            function applyExplode() { document.querySelectorAll('[data-explode]').forEach(el => { if (!el.dataset.base) { const p = el.getAttribute('position') || { x: 0, y: 0, z: 0 }; el.dataset.base = `${p.x} ${p.y} ${p.z}`; } const b = el.dataset.base.split(' ').map(Number); const o = el.dataset.explode.split(' ').map(Number); const to = exploded ? `${b[0] + o[0]} ${b[1] + o[1]} ${b[2] + o[2]}` : el.dataset.base; el.setAttribute('animation__ex', { property: 'position', to, dur: 700, easing: 'easeOutElastic' }); }); }
+            $('#btnExp').onclick = () => { exploded = !exploded; $('#btnExp').classList.toggle('active', exploded); applyExplode(); buzz(15); };
+            $('#btnFlow').onclick = () => { VFD.flow = !VFD.flow; $('#btnFlow').classList.toggle('active', VFD.flow); buzz(10); };
 
             const detail = $('#detail');
-            function showDetail(key) { const p = PARTS[key]; if (!p) return; $('#detailTitle').textContent = p.n; $('#detailBody').textContent = p.d; detail.classList.add('show'); setAutoplay(false); if (typeof p.s === 'number') { step = p.s; applyStep(); } highlight([key], '#38bdf8'); buzz(20); }
-            function hideDetail() { detail.classList.remove('show'); applyStep(); }
-            $('#detailClose').onclick = hideDetail;
-            detail.addEventListener('click', e => { if (e.target === detail) hideDetail(); });   // แตะพื้นหลังเพื่อปิด
+            function showDetail(key) {
+                const p = PARTS[key]; if (!p) return;
+                $('#detailTitle').textContent = p.n; $('#detailBody').textContent = p.d;
+                detail.classList.add('show'); setAutoplay(false);
+                if (typeof p.s === 'number') { step = p.s; applyStep(); }
+                document.querySelectorAll('[data-part]').forEach(el => {
+                    if (el.components && el.components.glow) el.setAttribute('glow', 'active', false);
+                });
+                const part = document.querySelector(`[data-part="${key}"]`);
+                if (part) { part.setAttribute('glow', 'active', true); part.setAttribute('glow', 'color', '#0ea5e9'); }
+                buzz(15);
+            }
+            $('#detailClose').onclick = () => { detail.classList.remove('show'); applyStep(); };
+            detail.onclick = (e) => { if (e.target === detail) { detail.classList.remove('show'); applyStep(); } };
 
             document.querySelector('a-scene').addEventListener('click', evt => {
-                const el = evt.target;
-                if (!el || !el.closest) return;
+                const el = evt.target; if (!el || !el.closest) return;
                 const act = el.closest('[data-act]');
-                if (act) { if (act.dataset.act === 'run' && VFD.fault) clearFault(); setRunning(act.dataset.act === 'run'); return; }
-                const part = el.closest('[data-part]');
-                if (part) showDetail(part.dataset.part);
+                if (act) {
+                    if (act.dataset.act === 'run') { if (VFD.fault) clearFault(); setRunning(true); }
+                    else setRunning(false);
+                    return;
+                }
+                const part = el.closest('[data-part]'); if (part) showDetail(part.dataset.part);
             });
 
             let audio = null;
-            function initAudio() { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; const ctx = new AC(); const gain = ctx.createGain(); gain.gain.value = 0; gain.connect(ctx.destination); const hum = ctx.createOscillator(); hum.type = 'sawtooth'; hum.frequency.value = 100; const whine = ctx.createOscillator(); whine.type = 'triangle'; whine.frequency.value = 1400; const wGain = ctx.createGain(); wGain.gain.value = 0.35; hum.connect(gain); whine.connect(wGain); wGain.connect(gain); hum.start(); whine.start(); return { ctx, gain, hum, whine }; }
             $('#btnSound').onclick = () => {
-                if (!audio) audio = initAudio();
-                if (!audio) return;
+                if (!audio) {
+                    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+                    const ctx = new AC(); const gain = ctx.createGain(); gain.gain.value = 0; gain.connect(ctx.destination);
+                    const hum = ctx.createOscillator(); hum.type = 'sawtooth'; hum.frequency.value = 100;
+                    const whine = ctx.createOscillator(); whine.type = 'triangle'; whine.frequency.value = 1400;
+                    const wGain = ctx.createGain(); wGain.gain.value = 0.25;
+                    hum.connect(gain); whine.connect(wGain); wGain.connect(gain);
+                    hum.start(); whine.start(); audio = { ctx, gain, hum, whine, on: false };
+                }
                 if (audio.ctx.state === 'suspended') audio.ctx.resume();
                 audio.on = !audio.on;
-                $('#btnSound').classList.toggle('on', !!audio.on);
-                $('#btnSound').textContent = audio.on ? 'ปิดเสียงมอเตอร์' : 'เปิดเสียงมอเตอร์';
+                $('#btnSound').classList.toggle('active', audio.on);
+                $('#btnSound').textContent = audio.on ? '🔇 ปิดเสียง' : '🔊 เปิดเสียง';
+                buzz(10);
             };
 
-            (function gestures() {
-                let dragging = false, lastX = 0, pinch0 = 0, scale0 = 0.6;
-                const canvasOK = e => mounted === 'preview' && e.target && e.target.tagName === 'CANVAS';
-                const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
-                document.addEventListener('touchstart', e => { if (!canvasOK(e)) return; if (e.touches.length === 1) { dragging = true; lastX = e.touches[0].clientX; } if (e.touches.length === 2) { pinch0 = dist(e.touches); scale0 = userScale || 0.6; } }, { passive: true });
-                document.addEventListener('touchmove', e => { if (!canvasOK(e)) return; const m = $('#modelRoot'); if (!m) return; if (e.touches.length === 1 && dragging) { if (faceCam) { faceCam = false; $('#btnFace').classList.remove('on'); m.setAttribute('face-cam', 'enabled', false); } userYaw += (e.touches[0].clientX - lastX) * 0.5; lastX = e.touches[0].clientX; m.setAttribute('rotation', `0 ${userYaw} 0`); } else if (e.touches.length === 2 && pinch0) { const v = Math.max(0.25, Math.min(1.4, scale0 * dist(e.touches) / pinch0)); applySize(v); $('#size').value = v; } }, { passive: true });
-                document.addEventListener('touchend', () => { dragging = false; pinch0 = 0; }, { passive: true });
-            })();
+            // Touch Gestures for Preview Mode
+            let drag = false, lastX = 0, lastY = 0, pinchD = 0, baseScale = 0.75;
+            document.addEventListener('touchstart', e => {
+                if (mounted !== 'preview' || e.target.tagName !== 'CANVAS') return;
+                if (e.touches.length === 1) { drag = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; }
+                else if (e.touches.length === 2) { pinchD = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); baseScale = parseFloat($('#inSize').value); }
+            }, { passive: true });
+            document.addEventListener('touchmove', e => {
+                if (mounted !== 'preview' || e.target.tagName !== 'CANVAS') return;
+                const m = $('#modelRoot'); if (!m) return;
+                if (e.touches.length === 1 && drag) {
+                    userYaw += (e.touches[0].clientX - lastX) * 0.5;
+                    rotX = Math.max(-45, Math.min(45, rotX + (e.touches[0].clientY - lastY) * 0.5));
+                    m.setAttribute('rotation', `${rotX} ${userYaw} 0`);
+                    lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+                } else if (e.touches.length === 2 && pinchD) {
+                    const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                    const v = Math.max(0.3, Math.min(1.5, baseScale * (d / pinchD)));
+                    $('#inSize').value = v; applySize(v);
+                }
+            }, { passive: true });
+            document.addEventListener('touchend', () => { drag = false; pinchD = 0; }, { passive: true });
 
             $('#btnPreview').onclick = () => {
                 const to = mounted === 'marker' ? 'preview' : 'marker';
                 mount(to);
-                $('#btnPreview').textContent = to === 'preview' ? 'กลับไปใช้ AR Marker' : 'โหมด 3D หมุนอิสระ';
-                setStatus(to === 'preview' ? 'preview' : 'searching');
+                $('#btnPreview').textContent = to === 'preview' ? '🔳 สลับกลับไปใช้กล้อง AR' : '🔄 โหมด 3D หมุนอิสระ';
+                const s = $('#status-pill'); s.classList.remove('found');
+                if (to === 'preview') { s.classList.add('found'); $('#statustext').textContent = 'โหมดจำลอง 3D'; toggleFold(true); }
+                else $('#statustext').textContent = 'ค้นหา Marker...';
+                buzz(20);
             };
-            function setStatus(mode) { $('#status-pill').classList.toggle('found', mode === 'found' || mode === 'preview'); $('#statustext').textContent = mode === 'found' ? 'พบ Marker แล้ว' : mode === 'preview' ? 'โหมดจำลอง 3D' : 'ค้นหา Marker…'; }
 
             const marker = $('#markerRoot');
-            marker.addEventListener('markerFound', () => { if (mounted === 'marker') { setStatus('found'); buzz(25); } });
-            marker.addEventListener('markerLost', () => { if (mounted === 'marker') setStatus('searching'); });
+            marker.addEventListener('markerFound', () => { if (mounted === 'marker') { $('#status-pill').classList.add('found'); $('#statustext').textContent = 'จำลองระบบพร้อมแล้ว'; buzz(25); } });
+            marker.addEventListener('markerLost', () => { if (mounted === 'marker') { $('#status-pill').classList.remove('found'); $('#statustext').textContent = 'ค้นหา Marker...'; } });
 
-            let last = performance.now(), lastRpm = -1;
-            function loop(now) {
+            // Render Loop
+            let last = performance.now();
+            function renderLoop(now) {
                 const dt = Math.min(0.1, (now - last) / 1000); last = now;
-                const rate = 50 / Math.max(0.5, VFD.ramp);
-                if (VFD.fault) { VFD.freq = Math.max(0, VFD.freq - rate * 1.6 * dt); }
+                const rate = 50 / Math.max(0.2, VFD.ramp);
+
+                if (VFD.fault) VFD.freq = Math.max(0, VFD.freq - rate * 2 * dt);
                 else if (VFD.running) { const d = VFD.target - VFD.freq; VFD.freq += Math.sign(d) * Math.min(Math.abs(d), rate * dt); }
-                else { VFD.freq = Math.max(0, VFD.freq - rate * dt); }
+                else VFD.freq = Math.max(0, VFD.freq - rate * dt);
 
                 const load = VFD.freq / 50;
-                if (VFD.fault !== 'oH') { VFD.heat += (load * 0.85 - VFD.heat) * dt * 0.25; VFD.heat = Math.max(0, Math.min(1, VFD.heat)); }
+                if (VFD.fault !== 'oH') { VFD.heat += (load * 0.9 - VFD.heat) * dt * 0.2; VFD.heat = Math.max(0, Math.min(1, VFD.heat)); }
 
                 const rpm = Math.round(120 * VFD.freq / VFD.poles);
-                $('#mFreq').textContent = VFD.fault ? FAULTS[VFD.fault].code : VFD.freq.toFixed(2);
+                $('#mFreq').textContent = VFD.fault ? 'ERR' : VFD.freq.toFixed(2);
                 $('#mRpm').textContent = rpm;
-                $('#mState').textContent = VFD.fault ? 'FAULT' : VFD.running ? (Math.abs(VFD.target - VFD.freq) > 0.2 ? 'ACC' : 'RUN') : 'STOP';
+                $('#mState').textContent = VFD.fault ? 'FAULT' : VFD.running ? (Math.abs(VFD.target - VFD.freq) > 0.5 ? 'ACC' : 'RUN') : 'STOP';
                 $('#heatfill').style.width = (VFD.heat * 100).toFixed(0) + '%';
 
                 const kp = document.getElementById('kpDisplay');
-                if (kp) { const txt = VFD.fault ? (Math.floor(now / 450) % 2 ? FAULTS[VFD.fault].code : ' ') : VFD.freq.toFixed(2); if (kp.dataset.last !== txt) { kp.dataset.last = txt; kp.setAttribute('th-label', 'text', txt); } }
+                if (kp) { const txt = VFD.fault ? (Math.floor(now / 400) % 2 ? FAULTS[VFD.fault].code : ' ') : VFD.freq.toFixed(2); if (kp.dataset.last !== txt) { kp.dataset.last = txt; kp.setAttribute('th-label', 'text', txt); } }
 
                 const ml = document.getElementById('motorLabel');
-                if (ml && rpm !== lastRpm) { lastRpm = rpm; ml.setAttribute('th-label', 'text', `มอเตอร์เหนี่ยวนำ 4 ขั้ว|${rpm} rpm`); }
+                if (ml && Math.floor(now / 200) % 2 === 0) ml.setAttribute('th-label', 'text', `มอเตอร์เหนี่ยวนำ 4 ขั้ว|${rpm} RPM`);
 
-                if (audio) { const g = audio.on && VFD.freq > 0.3 ? 0.035 : 0; audio.gain.gain.setTargetAtTime(g, audio.ctx.currentTime, 0.08); audio.hum.frequency.setTargetAtTime(24 + VFD.freq * 2.4, audio.ctx.currentTime, 0.08); audio.whine.frequency.setTargetAtTime(700 + VFD.freq * 26, audio.ctx.currentTime, 0.08); }
-                requestAnimationFrame(loop);
+                if (audio) { const g = (audio.on && VFD.freq > 1) ? 0.04 : 0; audio.gain.gain.setTargetAtTime(g, audio.ctx.currentTime, 0.1); audio.hum.frequency.setTargetAtTime(30 + VFD.freq * 2, audio.ctx.currentTime, 0.1); audio.whine.frequency.setTargetAtTime(500 + VFD.freq * 30, audio.ctx.currentTime, 0.1); }
+
+                requestAnimationFrame(renderLoop);
             }
-            requestAnimationFrame(loop);
+            requestAnimationFrame(renderLoop);
 
-            /* ย้ายวิดีโอกล้องขึ้นมาเป็นลูกตัวแรกของ body และตรึงสไตล์ด้วย JS
-               เพราะ AR.js ตั้งชื่อ element ไม่แน่นอนในแต่ละเวอร์ชัน */
-            let videoTries = 0;
-            function fixVideo() {
-                const v = document.querySelector('video');
-                if (v) {
-                    Object.assign(v.style, {
-                        position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
-                        objectFit: 'cover', zIndex: '0', display: 'block', opacity: '1', visibility: 'visible'
-                    });
-                    if (document.body.firstChild !== v) document.body.insertBefore(v, document.body.firstChild);
-                    return;
-                }
-                if (++videoTries < 40) setTimeout(fixVideo, 250);   // ลองซ้ำได้ราว 10 วินาที
-            }
-            fixVideo();
-            window.addEventListener('resize', () => setTimeout(fixVideo, 120));
-            window.addEventListener('orientationchange', () => setTimeout(fixVideo, 350));
-            [600, 1500, 3000, 6000].forEach(t => setTimeout(fixVideo, t));
-
-            const scene = document.querySelector('a-scene'); let started = false;
-            function start() { if (started) return; started = true; $('#loader').style.display = 'none'; mount('marker'); setAutoplay(true); fixVideo(); }
-            if (scene.hasLoaded) start();
-            scene.addEventListener('loaded', start);
-            scene.addEventListener('renderstart', start);
-            setTimeout(start, 2500);
-
-            function showErr(msg) { const b = $('#errbar'); b.style.display = 'block'; b.textContent = String(msg).slice(0, 400); }
-            window.addEventListener('error', e => { if (e.target && e.target.tagName === 'SCRIPT') showErr('โหลดสคริปต์ไม่สำเร็จ: ' + e.target.src); else showErr(e.message + ' @' + (e.filename || '').split('/').pop() + ':' + e.lineno); }, true);
-            window.addEventListener('unhandledrejection', e => showErr('Promise: ' + (e.reason && e.reason.message || e.reason)));
-            window.addEventListener('camera-error', () => showErr('เปิดกล้องไม่สำเร็จ ตรวจสิทธิ์กล้องของเว็บไซต์นี้'));
+            // Boot Sequence
+            const scene = document.querySelector('a-scene'); let booted = false;
+            function boot() { if (booted) return; booted = true; $('#loader').style.display = 'none'; mount('marker'); setAutoplay(true); }
+            if (scene.hasLoaded) boot(); scene.addEventListener('loaded', boot); setTimeout(boot, 3000);
         })();
     </script>
 </body>
