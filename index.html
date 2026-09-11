@@ -1,22 +1,23 @@
 <!DOCTYPE html>
 <html lang="th">
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <title>AR • VEICHI AC10 Series VFD</title>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+        <title>AR • VEICHI AC10 Series VFD</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap"
-        rel="stylesheet">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link
+            href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap"
+            rel="stylesheet">
 
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+        <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+        <script
+            src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
 
-    <style>
+        <style>
         :root {
             --panel: rgba(15, 23, 42, 0.85);
             --line: rgba(255, 255, 255, 0.12);
@@ -32,862 +33,395 @@
             --rad-md: 14px;
         }
 
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        html,
-        body {
-            margin: 0;
-            height: 100%;
-            overflow: hidden;
-            background: #050505;
-            font-family: "IBM Plex Sans Thai", sans-serif;
-            color: var(--text);
+        html, body {
+            margin: 0; height: 100%; overflow: hidden; background: #050505;
+            font-family: "IBM Plex Sans Thai", sans-serif; color: var(--text);
             -webkit-font-smoothing: antialiased;
         }
 
         /* ภาพจากกล้องต้องอยู่ชั้น 0 เหนือพื้นหลังของหน้าเว็บ ฉาก 3 มิติชั้น 1 UI ชั้น 20 ขึ้นไป
            ห้ามใช้ z-index ติดลบ เพราะวิดีโอจะจมใต้พื้นหลังจนจอดำ */
         video {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: cover !important;
-            z-index: 0 !important;
-            display: block !important;
+            position: fixed !important; top: 0 !important; left: 0 !important;
+            width: 100% !important; height: 100% !important;
+            object-fit: cover !important; z-index: 0 !important; display: block !important;
         }
 
-        a-scene {
-            position: fixed;
-            inset: 0;
-            z-index: 1;
-            background: transparent;
-        }
-
-        .a-canvas {
-            background: transparent !important;
-        }
+        a-scene { position: fixed; inset: 0; z-index: 1; background: transparent; }
+        .a-canvas { background: transparent !important; }
 
         .arjs-loader {
-            position: fixed;
-            inset: 0;
-            z-index: 999;
-            background: #020617;
-            color: var(--muted);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
+            position: fixed; inset: 0; z-index: 999; background: #020617; color: var(--muted);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
         }
 
         .spinner {
-            width: 44px;
-            height: 44px;
-            border: 3px solid rgba(255, 255, 255, .05);
-            border-top-color: var(--ac);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+            width: 44px; height: 44px; border: 3px solid rgba(255, 255, 255, .05);
+            border-top-color: var(--ac); border-radius: 50%; animation: spin 1s linear infinite;
         }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .glass {
-            background: var(--panel);
-            border: 1px solid var(--line);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            background: var(--panel); border: 1px solid var(--line);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
             box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
         }
 
         /* ---------------- HUD ---------------- */
         #hud-top {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 20;
-            pointer-events: none;
+            position: fixed; top: 0; left: 0; right: 0; z-index: 20; pointer-events: none;
             padding: calc(16px + env(safe-area-inset-top, 0px)) 16px 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 10px;
+            display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
         }
 
-        .title-card {
-            padding: 12px 18px;
-            border-radius: var(--rad-lg);
-            pointer-events: auto;
-        }
-
-        .title-card h1 {
-            margin: 0;
-            font-size: 16px;
-            font-weight: 700;
-            color: #fff;
-        }
-
-        .title-card p {
-            margin: 4px 0 0;
-            font-size: 11px;
-            color: var(--muted);
-            font-weight: 500;
-        }
+        .title-card { padding: 12px 18px; border-radius: var(--rad-lg); pointer-events: auto; }
+        .title-card h1 { margin: 0; font-size: 16px; font-weight: 700; color: #fff; }
+        .title-card p { margin: 4px 0 0; font-size: 11px; color: var(--muted); font-weight: 500; }
 
         .status-pill {
-            padding: 8px 14px;
-            border-radius: 30px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            pointer-events: auto;
-            flex: none;
+            padding: 8px 14px; border-radius: 30px; display: flex; align-items: center; gap: 8px;
+            font-size: 12px; font-weight: 600; pointer-events: auto; flex: none;
         }
 
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--dc);
-            box-shadow: 0 0 8px var(--dc);
-            transition: .3s;
-        }
-
-        .found .dot {
-            background: var(--ok);
-            box-shadow: 0 0 10px var(--ok);
-        }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dc); box-shadow: 0 0 8px var(--dc); transition: .3s; }
+        .found .dot { background: var(--ok); box-shadow: 0 0 10px var(--ok); }
 
         /* ---------------- Meter ---------------- */
         #meter {
-            position: fixed;
-            right: 16px;
-            top: calc(96px + env(safe-area-inset-top, 0px));
-            z-index: 20;
-            padding: 16px;
-            text-align: right;
-            min-width: 140px;
-            border-radius: var(--rad-lg);
-            border-right: 4px solid var(--pwm);
+            position: fixed; right: 16px; top: calc(96px + env(safe-area-inset-top, 0px)); z-index: 20;
+            padding: 16px; text-align: right; min-width: 140px;
+            border-radius: var(--rad-lg); border-right: 4px solid var(--pwm);
         }
 
-        #meter .big {
-            font-family: "IBM Plex Mono", monospace;
-            font-size: 32px;
-            font-weight: 700;
-            color: #fff;
-            line-height: 1;
-            letter-spacing: -1px;
-        }
+        #meter .big { font-family: "IBM Plex Mono", monospace; font-size: 32px; font-weight: 700; color: #fff; line-height: 1; letter-spacing: -1px; }
+        #meter .big small { font-size: 12px; color: var(--muted); font-family: "IBM Plex Sans Thai"; margin-left: 4px; font-weight: 500; }
+        #meter .sub { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--pwm); margin-top: 8px; font-weight: 600; }
+        #meter.fault { border-right-color: var(--bad); }
+        #meter.fault .big { color: var(--bad); animation: blink 1.2s infinite alternate; text-shadow: 0 0 15px rgba(239, 68, 68, .4); }
 
-        #meter .big small {
-            font-size: 12px;
-            color: var(--muted);
-            font-family: "IBM Plex Sans Thai";
-            margin-left: 4px;
-            font-weight: 500;
-        }
+        @keyframes blink { from { opacity: 1; } to { opacity: .5; } }
 
-        #meter .sub {
-            font-family: "IBM Plex Mono", monospace;
-            font-size: 12px;
-            color: var(--pwm);
-            margin-top: 8px;
-            font-weight: 600;
-        }
-
-        #meter.fault {
-            border-right-color: var(--bad);
-        }
-
-        #meter.fault .big {
-            color: var(--bad);
-            animation: blink 1.2s infinite alternate;
-            text-shadow: 0 0 15px rgba(239, 68, 68, .4);
-        }
-
-        @keyframes blink {
-            from {
-                opacity: 1;
-            }
-
-            to {
-                opacity: .5;
-            }
-        }
-
-        .heatbar {
-            height: 4px;
-            border-radius: 2px;
-            background: rgba(255, 255, 255, .1);
-            margin-top: 12px;
-            overflow: hidden;
-        }
-
-        .heatfill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, var(--ac), var(--pwm), var(--bad));
-            transition: width .3s;
-        }
+        .heatbar { height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .1); margin-top: 12px; overflow: hidden; }
+        .heatfill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--ac), var(--pwm), var(--bad)); transition: width .3s; }
 
         /* ---------------- Toast ---------------- */
         #toast-error {
-            position: fixed;
-            top: calc(20px + env(safe-area-inset-top, 0px));
-            left: 16px;
-            right: 16px;
-            z-index: 50;
-            max-width: 420px;
-            margin: 0 auto;
-            padding: 18px;
-            border-radius: var(--rad-lg);
-            pointer-events: none;
-            background: rgba(127, 29, 29, .95);
-            border: 1px solid #f87171;
+            position: fixed; top: calc(20px + env(safe-area-inset-top, 0px)); left: 16px; right: 16px;
+            z-index: 50; max-width: 420px; margin: 0 auto; padding: 18px; border-radius: var(--rad-lg);
+            pointer-events: none; background: rgba(127, 29, 29, .95); border: 1px solid #f87171;
             box-shadow: 0 16px 40px rgba(185, 28, 28, .4);
-            transform: translateY(-160%);
-            transition: .4s cubic-bezier(.2, .8, .2, 1);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            transform: translateY(-160%); transition: .4s cubic-bezier(.2, .8, .2, 1);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
         }
 
-        #toast-error.show {
-            transform: translateY(0);
-            pointer-events: auto;
-        }
-
-        .toast-head {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-            flex-wrap: wrap;
-        }
-
-        .toast-head b {
-            font-family: "IBM Plex Mono";
-            font-size: 14px;
-            color: #991b1b;
-            background: #fca5a5;
-            padding: 4px 8px;
-            border-radius: 6px;
-        }
-
-        .toast-head span {
-            font-weight: 700;
-            color: #fff;
-            font-size: 16px;
-        }
-
-        .toast-body {
-            font-size: 13px;
-            line-height: 1.6;
-            color: #fecaca;
-            margin-bottom: 14px;
-        }
+        #toast-error.show { transform: translateY(0); pointer-events: auto; }
+        .toast-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+        .toast-head b { font-family: "IBM Plex Mono"; font-size: 14px; color: #991b1b; background: #fca5a5; padding: 4px 8px; border-radius: 6px; }
+        .toast-head span { font-weight: 700; color: #fff; font-size: 16px; }
+        .toast-body { font-size: 13px; line-height: 1.6; color: #fecaca; margin-bottom: 14px; }
 
         /* ---------------- Bottom sheet ---------------- */
         #dock {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 20;
-            pointer-events: none;
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 20; pointer-events: none;
             padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        .dock-card {
-            width: 100%;
-            max-width: 600px;
-            padding: 20px;
-            border-radius: 28px;
-            pointer-events: auto;
-            transition: .4s cubic-bezier(.2, .8, .2, 1);
-        }
+        .dock-card { width: 100%; max-width: 600px; padding: 20px; border-radius: 28px; pointer-events: auto; transition: .4s cubic-bezier(.2, .8, .2, 1); }
+        .drag-handle { width: 44px; height: 5px; background: rgba(255, 255, 255, .25); border-radius: 3px; margin: 0 auto 16px; cursor: pointer; }
 
-        .drag-handle {
-            width: 44px;
-            height: 5px;
-            background: rgba(255, 255, 255, .25);
-            border-radius: 3px;
-            margin: 0 auto 16px;
-            cursor: pointer;
-        }
-
-        .step-header {
-            display: flex;
-            align-items: flex-start;
-            gap: 14px;
-        }
-
+        .step-header { display: flex; align-items: flex-start; gap: 14px; }
         .step-num {
-            background: rgba(14, 165, 233, .15);
-            color: var(--ac);
-            border: 1px solid rgba(14, 165, 233, .3);
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-family: "IBM Plex Mono";
-            font-size: 15px;
-            font-weight: 700;
-            flex: none;
+            background: rgba(14, 165, 233, .15); color: var(--ac); border: 1px solid rgba(14, 165, 233, .3);
+            padding: 6px 12px; border-radius: 8px; font-family: "IBM Plex Mono"; font-size: 15px; font-weight: 700; flex: none;
         }
 
-        .step-info {
-            flex: 1;
-            min-width: 0;
-        }
+        .step-info { flex: 1; min-width: 0; }
+        .step-info h2 { margin: 0; font-size: 17px; font-weight: 600; line-height: 1.4; }
+        #step-desc { margin: 8px 0 0; font-size: 13.5px; line-height: 1.6; color: #cbd5e1; font-weight: 300; }
+        #step-spec { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--muted); border-left: 2px solid var(--ac); padding-left: 10px; }
 
-        .step-info h2 {
-            margin: 0;
-            font-size: 17px;
-            font-weight: 600;
-            line-height: 1.4;
-        }
+        #btnFold { background: transparent; border: none; padding: 0; color: var(--muted); width: 36px; height: 36px; flex: none; transition: .3s; cursor: pointer; }
 
-        #step-desc {
-            margin: 8px 0 0;
-            font-size: 13.5px;
-            line-height: 1.6;
-            color: #cbd5e1;
-            font-weight: 300;
-        }
+        .track { display: flex; gap: 4px; margin: 20px 0; }
+        .track i { height: 4px; flex: 1; background: rgba(255, 255, 255, .1); border-radius: 2px; transition: .3s; }
+        .track i.on { background: var(--ac); box-shadow: 0 0 10px rgba(14, 165, 233, .5); }
 
-        #step-spec {
-            margin: 8px 0 0;
-            font-size: 12px;
-            line-height: 1.5;
-            color: var(--muted);
-            border-left: 2px solid var(--ac);
-            padding-left: 10px;
-        }
+        .dock-card.folded #step-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; opacity: .8; }
+        .dock-card.folded #step-spec, .dock-card.folded .dock-body { display: none; }
+        .dock-card.folded .track { margin-bottom: 0; }
+        .dock-card.folded #btnFold { transform: rotate(180deg); }
 
-        #btnFold {
-            background: transparent;
-            border: none;
-            padding: 0;
-            color: var(--muted);
-            width: 36px;
-            height: 36px;
-            flex: none;
-            transition: .3s;
-            cursor: pointer;
-        }
-
-        .track {
-            display: flex;
-            gap: 4px;
-            margin: 20px 0;
-        }
-
-        .track i {
-            height: 4px;
-            flex: 1;
-            background: rgba(255, 255, 255, .1);
-            border-radius: 2px;
-            transition: .3s;
-        }
-
-        .track i.on {
-            background: var(--ac);
-            box-shadow: 0 0 10px rgba(14, 165, 233, .5);
-        }
-
-        .dock-card.folded #step-desc {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            opacity: .8;
-        }
-
-        .dock-card.folded #step-spec,
-        .dock-card.folded .dock-body {
-            display: none;
-        }
-
-        .dock-card.folded .track {
-            margin-bottom: 0;
-        }
-
-        .dock-card.folded #btnFold {
-            transform: rotate(180deg);
-        }
-
-        .grid-3 {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-
-        .grid-2 {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-
-        .grid-4 {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-        }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 
         .btn {
-            font-family: inherit;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--muted);
-            background: rgba(255, 255, 255, .04);
-            border: 1px solid rgba(255, 255, 255, .08);
-            border-radius: var(--rad-md);
-            padding: 12px 8px;
-            cursor: pointer;
-            transition: .2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
+            font-family: inherit; font-size: 13px; font-weight: 600; color: var(--muted);
+            background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: var(--rad-md); padding: 12px 8px; cursor: pointer; transition: .2s;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
         }
 
-        .btn:active {
-            transform: scale(.96);
-            background: rgba(255, 255, 255, .08);
-        }
+        .btn:active { transform: scale(.96); background: rgba(255, 255, 255, .08); }
+        .btn:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }
+        .btn.active { background: rgba(14, 165, 233, .15); border-color: rgba(14, 165, 233, .4); color: #bae6fd; }
+        .btn-run { background: rgba(16, 185, 129, .05); border-color: rgba(16, 185, 129, .2); color: var(--ok); }
+        .btn-run.active { background: var(--ok); color: #022c22; font-weight: 700; box-shadow: 0 0 20px rgba(16, 185, 129, .4); border-color: transparent; }
+        .btn-stop { background: rgba(239, 68, 68, .05); border-color: rgba(239, 68, 68, .2); color: var(--bad); }
+        .btn-stop.active { background: rgba(239, 68, 68, .25); color: #fecaca; border-color: rgba(239, 68, 68, .5); }
+        .btn-outline { width: 100%; background: transparent; border: 1px dashed rgba(255, 255, 255, .2); margin-bottom: 0; }
+        .btn-reset { width: 100%; background: rgba(0, 0, 0, .3); border: 1px solid rgba(255, 255, 255, .2); color: #fff; }
+        .btn-wide { grid-column: 1 / -1; }
 
-        .btn:focus-visible {
-            outline: 2px solid var(--ac);
-            outline-offset: 2px;
-        }
+        .foldable { display: none; margin-top: 16px; border-top: 1px solid var(--line); padding-top: 16px; animation: slideDown .3s; }
+        .foldable.show { display: block; }
 
-        .btn.active {
-            background: rgba(14, 165, 233, .15);
-            border-color: rgba(14, 165, 233, .4);
-            color: #bae6fd;
-        }
-
-        .btn-run {
-            background: rgba(16, 185, 129, .05);
-            border-color: rgba(16, 185, 129, .2);
-            color: var(--ok);
-        }
-
-        .btn-run.active {
-            background: var(--ok);
-            color: #022c22;
-            font-weight: 700;
-            box-shadow: 0 0 20px rgba(16, 185, 129, .4);
-            border-color: transparent;
-        }
-
-        .btn-stop {
-            background: rgba(239, 68, 68, .05);
-            border-color: rgba(239, 68, 68, .2);
-            color: var(--bad);
-        }
-
-        .btn-stop.active {
-            background: rgba(239, 68, 68, .25);
-            color: #fecaca;
-            border-color: rgba(239, 68, 68, .5);
-        }
-
-        .btn-outline {
-            width: 100%;
-            background: transparent;
-            border: 1px dashed rgba(255, 255, 255, .2);
-            margin-bottom: 0;
-        }
-
-        .btn-reset {
-            width: 100%;
-            background: rgba(0, 0, 0, .3);
-            border: 1px solid rgba(255, 255, 255, .2);
-            color: #fff;
-        }
-
-        .btn-wide {
-            grid-column: 1 / -1;
-        }
-
-        .foldable {
-            display: none;
-            margin-top: 16px;
-            border-top: 1px solid var(--line);
-            padding-top: 16px;
-            animation: slideDown .3s;
-        }
-
-        .foldable.show {
-            display: block;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px)
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0)
-            }
-        }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px) } to { opacity: 1; transform: translateY(0) } }
 
         .sliders {
-            display: grid;
-            grid-template-columns: auto 1fr auto;
-            gap: 16px 12px;
-            align-items: center;
-            background: rgba(0, 0, 0, .3);
-            padding: 16px;
-            border-radius: var(--rad-md);
-            margin-bottom: 12px;
+            display: grid; grid-template-columns: auto 1fr auto; gap: 16px 12px; align-items: center;
+            background: rgba(0, 0, 0, .3); padding: 16px; border-radius: var(--rad-md); margin-bottom: 12px;
         }
 
-        .sliders label {
-            font-size: 12px;
-            color: var(--muted);
-            font-weight: 500;
-        }
+        .sliders label { font-size: 12px; color: var(--muted); font-weight: 500; }
+        .val { font-family: "IBM Plex Mono"; font-size: 13px; color: var(--ac); text-align: right; min-width: 55px; font-weight: 600; }
 
-        .val {
-            font-family: "IBM Plex Mono";
-            font-size: 13px;
-            color: var(--ac);
-            text-align: right;
-            min-width: 55px;
-            font-weight: 600;
-        }
+        input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; background: rgba(255, 255, 255, .1); border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid var(--ac); box-shadow: 0 0 10px rgba(255, 255, 255, .4); }
+        input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid var(--ac); }
 
-        input[type=range] {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 100%;
-            height: 4px;
-            background: rgba(255, 255, 255, .1);
-            border-radius: 2px;
-        }
-
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: #fff;
-            border: 2px solid var(--ac);
-            box-shadow: 0 0 10px rgba(255, 255, 255, .4);
-        }
-
-        input[type=range]::-moz-range-thumb {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: #fff;
-            border: 2px solid var(--ac);
-        }
-
-        .fault-box {
-            background: rgba(239, 68, 68, .05);
-            border: 1px solid rgba(239, 68, 68, .2);
-            padding: 12px;
-            border-radius: var(--rad-md);
-            margin-bottom: 12px;
-        }
-
-        .btn-sm {
-            padding: 8px 4px;
-            font-size: 12px;
-            font-family: "IBM Plex Mono";
-            font-weight: 600;
-            color: #fca5a5;
-        }
+        .fault-box { background: rgba(239, 68, 68, .05); border: 1px solid rgba(239, 68, 68, .2); padding: 12px; border-radius: var(--rad-md); margin-bottom: 12px; }
+        .btn-sm { padding: 8px 4px; font-size: 12px; font-family: "IBM Plex Mono"; font-weight: 600; color: #fca5a5; }
 
         .legend {
-            display: flex;
-            gap: 14px;
-            flex-wrap: wrap;
-            font-size: 11px;
-            color: var(--muted);
-            justify-content: center;
-            margin-top: 16px;
-            background: rgba(0, 0, 0, .2);
-            padding: 12px;
-            border-radius: 10px;
+            display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; color: var(--muted);
+            justify-content: center; margin-top: 16px; background: rgba(0, 0, 0, .2); padding: 12px; border-radius: 10px;
         }
 
-        .legend span {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: 500;
-        }
-
-        .sw {
-            width: 10px;
-            height: 10px;
-            border-radius: 3px;
-        }
+        .legend span { display: flex; align-items: center; gap: 6px; font-weight: 500; }
+        .sw { width: 10px; height: 10px; border-radius: 3px; }
 
         /* ---------------- Detail modal ---------------- */
         #detail {
-            position: fixed;
-            inset: 0;
-            z-index: 40;
-            pointer-events: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, .7);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            opacity: 0;
-            transition: .3s;
-            padding: 20px;
+            position: fixed; inset: 0; z-index: 40; pointer-events: none;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0, 0, 0, .7); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            opacity: 0; transition: .3s; padding: 20px;
         }
 
-        #detail.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
+        #detail.show { opacity: 1; pointer-events: auto; }
 
         #detail .card {
-            max-width: 400px;
-            border-color: var(--ac);
-            background: rgba(15, 23, 33, .95);
-            position: relative;
-            transform: translateY(20px) scale(.95);
-            transition: .3s cubic-bezier(.175, .885, .32, 1.275);
-            padding: 24px;
-            border-radius: var(--rad-lg);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, .6);
+            max-width: 400px; border-color: var(--ac); background: rgba(15, 23, 33, .95); position: relative;
+            transform: translateY(20px) scale(.95); transition: .3s cubic-bezier(.175, .885, .32, 1.275);
+            padding: 24px; border-radius: var(--rad-lg); box-shadow: 0 20px 40px rgba(0, 0, 0, .6);
         }
 
-        #detail.show .card {
-            transform: translateY(0) scale(1);
-        }
-
-        #detail h3 {
-            margin: 0 40px 12px 0;
-            font-size: 18px;
-            color: var(--ac);
-        }
-
-        #detail p {
-            margin: 0;
-            font-size: 14px;
-            line-height: 1.7;
-            color: #e2e8f0;
-            font-weight: 300;
-        }
-
+        #detail.show .card { transform: translateY(0) scale(1); }
+        #detail h3 { margin: 0 40px 12px 0; font-size: 18px; color: var(--ac); }
+        #detail p { margin: 0; font-size: 14px; line-height: 1.7; color: #e2e8f0; font-weight: 300; }
         #detail .close {
-            position: absolute;
-            right: 16px;
-            top: 16px;
-            background: rgba(255, 255, 255, .1);
-            border: none;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
+            position: absolute; right: 16px; top: 16px; background: rgba(255, 255, 255, .1); border: none;
+            border-radius: 50%; width: 32px; height: 32px; color: #fff;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
 
         #errbar {
-            position: fixed;
-            left: 8px;
-            right: 8px;
-            top: calc(74px + env(safe-area-inset-top, 0px));
-            z-index: 60;
-            display: none;
-            background: rgba(120, 20, 20, .94);
-            border: 1px solid #ff8a7a;
-            border-radius: 10px;
-            padding: 9px 12px;
-            font-size: 11.5px;
-            line-height: 1.5;
-            font-family: "IBM Plex Mono", monospace;
-            word-break: break-word;
+            position: fixed; left: 8px; right: 8px; top: calc(74px + env(safe-area-inset-top, 0px)); z-index: 60;
+            display: none; background: rgba(120, 20, 20, .94); border: 1px solid #ff8a7a; border-radius: 10px;
+            padding: 9px 12px; font-size: 11.5px; line-height: 1.5; font-family: "IBM Plex Mono", monospace; word-break: break-word;
         }
 
-        @media (prefers-reduced-motion: reduce) {
-            * {
-                animation-duration: .01ms !important;
-                transition-duration: .01ms !important;
-            }
-        }
+        @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
     </style>
-</head>
+    </head>
 
-<body>
-    <div class="arjs-loader" id="loader">
-        <div class="spinner"></div>
-        <div>กำลังเตรียมสภาพแวดล้อม AR…</div>
-    </div>
-
-    <div id="errbar"></div>
-
-    <div id="hud-top">
-        <div class="glass title-card">
-            <h1>VEICHI AC10 Series</h1>
-            <p>VFD ทรงแคบ • ภาพตัดขวางจำลอง</p>
+    <body>
+        <div class="arjs-loader" id="loader">
+            <div class="spinner"></div>
+            <div>กำลังเตรียมสภาพแวดล้อม AR…</div>
         </div>
-        <div class="glass status-pill" id="status-pill">
-            <span class="dot" id="dot"></span><span id="statustext">ค้นหา Marker</span>
-        </div>
-    </div>
 
-    <div id="meter" class="glass">
-        <div class="big"><span id="mFreq">0.00</span><small>Hz</small></div>
-        <div class="sub"><span id="mRpm">0</span> rpm · <span id="mState">STOP</span></div>
-        <div class="heatbar">
-            <div class="heatfill" id="heatfill"></div>
-        </div>
-    </div>
+        <div id="errbar"></div>
 
-    <div id="toast-error" class="glass">
-        <div class="toast-head"><b id="fault-code">E.XX</b> <span id="fault-title">Error</span></div>
-        <div class="toast-body" id="fault-desc"></div>
-        <button class="btn btn-reset" id="btnToastReset">รับทราบและรีเซ็ตระบบ</button>
-    </div>
-
-    <div id="detail">
-        <div class="card glass">
-            <button class="close" id="detailClose">✕</button>
-            <h3 id="detailTitle">—</h3>
-            <p id="detailBody">—</p>
-        </div>
-    </div>
-
-    <div id="dock">
-        <div class="glass dock-card" id="dockCard">
-            <div class="drag-handle" id="btnFoldHandle"></div>
-
-            <div class="step-header">
-                <span class="step-num" id="step-num">01</span>
-                <div class="step-info">
-                    <h2 id="step-title">—</h2>
-                    <p id="step-desc">—</p>
-                    <p id="step-spec"></p>
-                </div>
-                <button id="btnFold" title="ย่อแผง">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                </button>
+        <div id="hud-top">
+            <div class="glass title-card">
+                <h1>VEICHI AC10 Series</h1>
+                <p>VFD ทรงแคบ • ภาพตัดขวางจำลอง</p>
             </div>
+            <div class="glass status-pill" id="status-pill">
+                <span class="dot" id="dot"></span><span id="statustext">ค้นหา
+                    Marker</span>
+            </div>
+        </div>
 
-            <div class="track" id="track"></div>
+        <div id="meter" class="glass">
+            <div class="big"><span id="mFreq">0.00</span><small>Hz</small></div>
+            <div class="sub"><span id="mRpm">0</span> rpm · <span
+                    id="mState">STOP</span></div>
+            <div class="heatbar">
+                <div class="heatfill" id="heatfill"></div>
+            </div>
+        </div>
 
-            <div class="dock-body">
-                <div class="grid-3">
-                    <button class="btn" id="btnPrev">◀ ก่อนหน้า</button>
-                    <button class="btn active" id="btnPlay">❚❚ หยุดออโต้</button>
-                    <button class="btn" id="btnNext">ถัดไป ▶</button>
-                </div>
+        <div id="toast-error" class="glass">
+            <div class="toast-head"><b id="fault-code">E.XX</b> <span
+                    id="fault-title">Error</span></div>
+            <div class="toast-body" id="fault-desc"></div>
+            <button class="btn btn-reset"
+                id="btnToastReset">รับทราบและรีเซ็ตระบบ</button>
+        </div>
 
-                <div class="grid-2">
-                    <button class="btn btn-run active" id="btnRun">▶ เดินเครื่อง</button>
-                    <button class="btn btn-stop" id="btnStop">■ หยุด</button>
-                </div>
+        <div id="detail">
+            <div class="card glass">
+                <button class="close" id="detailClose">✕</button>
+                <h3 id="detailTitle">—</h3>
+                <p id="detailBody">—</p>
+            </div>
+        </div>
 
-                <div class="grid-3">
-                    <button class="btn active" id="btnCut">เปิดฝา</button>
-                    <button class="btn" id="btnExp">แยกชิ้น</button>
-                    <button class="btn active" id="btnFlow">เดินไฟ</button>
-                </div>
+        <div id="dock">
+            <div class="glass dock-card" id="dockCard">
+                <div class="drag-handle" id="btnFoldHandle"></div>
 
-                <div class="grid-2">
-                    <button class="btn active" id="btnFace">หันเข้ากล้อง</button>
-                    <button class="btn" id="btnTilt">marker บนโต๊ะ</button>
-                </div>
-
-                <button class="btn btn-outline" id="btnMore">ตั้งค่าขั้นสูงและจำลองปัญหา</button>
-
-                <div id="more" class="foldable">
-                    <div class="sliders">
-                        <label for="inFreq">ความถี่เป้าหมาย</label>
-                        <input id="inFreq" type="range" min="0" max="120" step="0.5" value="50">
-                        <span class="val" id="valFreq">50.0 Hz</span>
-
-                        <label for="inAccel">เวลาเร่ง / ชะลอ</label>
-                        <input id="inAccel" type="range" min="1" max="20" step="0.5" value="5">
-                        <span class="val" id="valAccel">5.0 s</span>
-
-                        <label for="inSize">ขนาดโมเดล</label>
-                        <input id="inSize" type="range" min="0.3" max="1.5" step="0.05" value="0.75">
-                        <span class="val" id="valSize">0.75x</span>
+                <div class="step-header">
+                    <span class="step-num" id="step-num">01</span>
+                    <div class="step-info">
+                        <h2 id="step-title">—</h2>
+                        <p id="step-desc">—</p>
+                        <p id="step-spec"></p>
                     </div>
+                    <button id="btnFold" title="ย่อแผง">
+                        <svg width="24" height="24" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                </div>
 
-                    <div class="fault-box">
-                        <p style="margin:0 0 10px; font-size:12px; color:var(--bad); font-weight:600;">จำลองความผิดพลาด
-                        </p>
-                        <div class="grid-4">
-                            <button class="btn btn-sm" data-fault="oC">E.oC</button>
-                            <button class="btn btn-sm" data-fault="oU">E.oU</button>
-                            <button class="btn btn-sm" data-fault="oH">E.oH</button>
-                            <button class="btn btn-sm" data-fault="LU">E.LU</button>
-                        </div>
+                <div class="track" id="track"></div>
+
+                <div class="dock-body">
+                    <div class="grid-3">
+                        <button class="btn" id="btnPrev">◀ ก่อนหน้า</button>
+                        <button class="btn active" id="btnPlay">❚❚
+                            หยุดออโต้</button>
+                        <button class="btn" id="btnNext">ถัดไป ▶</button>
                     </div>
 
                     <div class="grid-2">
-                        <button class="btn" id="btnSound">เปิดเสียงมอเตอร์</button>
-                        <button class="btn" id="btnPreview">โหมด 3D หมุนอิสระ</button>
+                        <button class="btn btn-run active" id="btnRun">▶
+                            เดินเครื่อง</button>
+                        <button class="btn btn-stop" id="btnStop">■
+                            หยุด</button>
                     </div>
 
-                    <div class="legend">
-                        <span><i class="sw" style="background:var(--ac)"></i> AC IN</span>
-                        <span><i class="sw" style="background:var(--dc)"></i> DC BUS</span>
-                        <span><i class="sw" style="background:var(--pwm)"></i> PWM OUT</span>
-                        <span><i class="sw" style="background:var(--air)"></i> ลมระบาย</span>
+                    <div class="grid-3">
+                        <button class="btn active" id="btnCut">เปิดฝา</button>
+                        <button class="btn" id="btnExp">แยกชิ้น</button>
+                        <button class="btn active" id="btnFlow">เดินไฟ</button>
+                    </div>
+
+                    <div class="grid-3">
+                        <button class="btn active"
+                            id="btnFace">หันเข้ากล้อง</button>
+                        <button class="btn" id="btnTilt">marker บนโต๊ะ</button>
+                        <button class="btn" id="btnXray">สแกนภายใน</button>
+                    </div>
+
+                    <button class="btn btn-outline"
+                        id="btnMore">ตั้งค่าขั้นสูงและจำลองปัญหา</button>
+
+                    <div id="more" class="foldable">
+                        <div class="sliders">
+                            <label for="inFreq">ความถี่เป้าหมาย</label>
+                            <input id="inFreq" type="range" min="0" max="120"
+                                step="0.5" value="50">
+                            <span class="val" id="valFreq">50.0 Hz</span>
+
+                            <label for="inAccel">เวลาเร่ง / ชะลอ</label>
+                            <input id="inAccel" type="range" min="1" max="20"
+                                step="0.5" value="5">
+                            <span class="val" id="valAccel">5.0 s</span>
+
+                            <label for="inSize">ขนาดโมเดล</label>
+                            <input id="inSize" type="range" min="0.3" max="1.5"
+                                step="0.05" value="0.75">
+                            <span class="val" id="valSize">0.75x</span>
+                        </div>
+
+                        <div class="fault-box">
+                            <p
+                                style="margin:0 0 10px; font-size:12px; color:var(--bad); font-weight:600;">จำลองความผิดพลาด</p>
+                            <div class="grid-4">
+                                <button class="btn btn-sm"
+                                    data-fault="oC">E.oC</button>
+                                <button class="btn btn-sm"
+                                    data-fault="oU">E.oU</button>
+                                <button class="btn btn-sm"
+                                    data-fault="oH">E.oH</button>
+                                <button class="btn btn-sm"
+                                    data-fault="LU">E.LU</button>
+                            </div>
+                        </div>
+
+                        <div class="grid-2">
+                            <button class="btn"
+                                id="btnSound">เปิดเสียงมอเตอร์</button>
+                            <button class="btn" id="btnPreview">โหมด 3D
+                                หมุนอิสระ</button>
+                        </div>
+
+                        <div class="legend">
+                            <span><i class="sw"
+                                    style="background:var(--ac)"></i> AC
+                                IN</span>
+                            <span><i class="sw"
+                                    style="background:var(--dc)"></i> DC
+                                BUS</span>
+                            <span><i class="sw"
+                                    style="background:var(--pwm)"></i> PWM
+                                OUT</span>
+                            <span><i class="sw"
+                                    style="background:var(--air)"></i>
+                                ลมระบาย</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- ==================== 3D SCENE ==================== -->
-    <a-scene vr-mode-ui="enabled: false" loading-screen="enabled: false"
-        renderer="antialias: true; colorManagement: true; alpha: true; precision: medium" embedded
-        arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false; patternRatio: 0.5;">
+        <!-- ==================== 3D SCENE ==================== -->
+        <a-scene vr-mode-ui="enabled: false" loading-screen="enabled: false"
+            renderer="antialias: true; colorManagement: true; alpha: true; precision: medium"
+            embedded
+            arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false; patternRatio: 0.5;">
 
-        <a-entity light="type: hemisphere; color: #ffffff; groundColor: #1e293b; intensity: 1.1"></a-entity>
-        <a-entity light="type: directional; color: #ffffff; intensity: 0.6" position="2 4 3"></a-entity>
-        <a-entity light="type: directional; color: #7dd3fc; intensity: 0.4" position="-3 2 -2"></a-entity>
+            <a-entity
+                light="type: hemisphere; color: #ffffff; groundColor: #1e293b; intensity: 1.1"></a-entity>
+            <a-entity light="type: directional; color: #ffffff; intensity: 0.6"
+                position="2 4 3"></a-entity>
+            <a-entity light="type: directional; color: #7dd3fc; intensity: 0.4"
+                position="-3 2 -2"></a-entity>
 
-        <a-marker id="markerRoot" preset="hiro" smooth="true" smoothCount="8" smoothTolerance="0.012"
-            smoothThreshold="4">
-            <a-entity id="mount-marker"></a-entity>
-        </a-marker>
+            <a-marker id="markerRoot" preset="hiro" smooth="true"
+                smoothCount="8" smoothTolerance="0.012"
+                smoothThreshold="4">
+                <a-entity id="mount-marker"></a-entity>
+            </a-marker>
 
-        <a-entity camera cursor="rayOrigin: mouse; fuse: false"
-            raycaster="objects: [data-part], [data-act]; interval: 100">
-            <a-entity id="mount-preview"></a-entity>
-        </a-entity>
-    </a-scene>
+            <a-entity camera cursor="rayOrigin: mouse; fuse: false"
+                raycaster="objects: [data-part], [data-act]; interval: 100">
+                <a-entity id="mount-preview"></a-entity>
+            </a-entity>
+        </a-scene>
 
-    <script>
+        <script>
         window.VFD = { target: 50, freq: 0, poles: 4, ramp: 5, running: true, fault: null, heat: 0, flow: true };
 
         /* ---------------- A-Frame components ---------------- */
@@ -1021,6 +555,90 @@
 
         AFRAME.registerComponent('spin', { schema: { rate: { default: 200 }, fromFreq: { default: false } }, tick(time, dt) { if (!dt) return; const r = this.data.fromFreq ? (VFD.freq / 50) * this.data.rate : this.data.rate; this.el.object3D.rotation.y += (r * dt) / 1000 * Math.PI / 180; } });
 
+        /* เงาสัมผัสใต้โมเดล ทำให้สมองอ่านว่าวัตถุวางอยู่บนพื้นจริงไม่ใช่ภาพลอยทับ */
+        AFRAME.registerComponent('soft-shadow', {
+            schema: { radius: { default: 1 }, opacity: { default: 0.5 } },
+            init() {
+                const c = document.createElement('canvas'); c.width = c.height = 256;
+                const g = c.getContext('2d');
+                const grd = g.createRadialGradient(128, 128, 8, 128, 128, 126);
+                grd.addColorStop(0, 'rgba(0,0,0,0.8)');
+                grd.addColorStop(0.45, 'rgba(0,0,0,0.4)');
+                grd.addColorStop(1, 'rgba(0,0,0,0)');
+                g.fillStyle = grd; g.fillRect(0, 0, 256, 256);
+                const tex = new THREE.CanvasTexture(c);
+                this.el.setObject3D('mesh', new THREE.Mesh(
+                    new THREE.PlaneGeometry(this.data.radius * 2, this.data.radius * 2),
+                    new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: this.data.opacity, depthWrite: false })
+                ));
+            }
+        });
+
+        /* เส้นนำสายตาแบบภาพประกอบทางวิศวกรรม: ป้าย → จุดบนชิ้นส่วนจริง */
+        AFRAME.registerComponent('leader-line', {
+            schema: { from: { type: 'vec3' }, to: { type: 'vec3' }, color: { default: '#94a3b8' }, opacity: { default: 0.55 } },
+            init() {
+                const a = new THREE.Vector3(this.data.from.x, this.data.from.y, this.data.from.z);
+                const b = new THREE.Vector3(this.data.to.x, this.data.to.y, this.data.to.z);
+                const g = new THREE.Group();
+                g.add(new THREE.Line(
+                    new THREE.BufferGeometry().setFromPoints([a, b]),
+                    new THREE.LineBasicMaterial({ color: this.data.color, transparent: true, opacity: this.data.opacity })
+                ));
+                const dot = new THREE.Mesh(new THREE.SphereGeometry(0.013, 8, 8), new THREE.MeshBasicMaterial({ color: this.data.color }));
+                dot.position.copy(b); g.add(dot);
+                this.el.setObject3D('leader', g);
+            }
+        });
+
+        /* ระนาบสแกนเอกซเรย์: ใช้ clipping plane ตัดตัวเครื่องทีละชั้นจากหน้าไปหลัง */
+        AFRAME.registerComponent('xray-sweep', {
+            schema: { enabled: { default: false }, from: { default: 0.45 }, to: { default: -0.38 }, dur: { default: 5000 } },
+            init() {
+                const r = this.el.sceneEl.renderer;
+                if (r) r.localClippingEnabled = true;
+                this._n = new THREE.Vector3(0, 0, -1);
+                this.plane = new THREE.Plane(this._n.clone(), 1000);
+                this.local = new THREE.Plane(this._n.clone(), 1000);
+                this.applied = false;
+
+                const geo = new THREE.PlaneGeometry(0.80, 1.64);
+                this.slice = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+                    color: '#38bdf8', transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false
+                }));
+                this.slice.position.set(0, 0.75, 0.45);
+                this.slice.visible = false;
+                this.edge = new THREE.LineSegments(new THREE.EdgesGeometry(geo),
+                    new THREE.LineBasicMaterial({ color: '#7dd3fc' }));
+                this.slice.add(this.edge);
+                this.el.object3D.add(this.slice);
+            },
+            collect() {
+                const mats = [];
+                this.el.object3D.traverse(n => {
+                    if (n === this.slice || n === this.edge) return;
+                    const m = n.material; if (!m) return;
+                    (Array.isArray(m) ? m : [m]).forEach(mm => { if (mm.map) return; mats.push(mm); });  // ข้ามป้ายข้อความ
+                });
+                mats.forEach(m => { m.clippingPlanes = [this.plane]; m.needsUpdate = true; });
+                this.applied = true;
+            },
+            tick(t) {
+                if (!this.data.enabled) {
+                    if (this.applied) { this.plane.set(this._n, 1000); this.slice.visible = false; }
+                    return;
+                }
+                if (!this.applied) this.collect();
+                const p = Math.sin(t / this.data.dur * Math.PI * 2) * 0.5 + 0.5;      // ไปกลับนุ่ม ๆ
+                const z = this.data.from + (this.data.to - this.data.from) * p;
+                this.slice.visible = true;
+                this.slice.position.z = z;
+                this.local.set(this._n, z);
+                this.el.object3D.updateMatrixWorld();
+                this.plane.copy(this.local).applyMatrix4(this.el.object3D.matrixWorld);
+            }
+        });
+
         /* ---------------- โมเดล: จัดเรียงเป็นคอลัมน์แนวตั้ง ---------------- */
         function buildModel() {
             const M = (c, o) => `material="color:${c}; metalness:0.3; roughness:0.5${o !== undefined ? '; opacity:' + o + '; transparent:true' : ''}"`;
@@ -1029,10 +647,18 @@
             return `
 <a-entity id="tiltRoot">
 <a-entity id="modelRoot" scale="0.75 0.75 0.75" position="0 -0.2 0" face-cam="enabled: true">
+  <a-entity id="contactShadow" soft-shadow="radius: 1.15; opacity: 0.5" position="0 -1.40 0" rotation="-90 0 0"></a-entity>
   <a-torus position="0 0.012 0" rotation="-90 0 0" radius="1.3" radius-tubular="0.006" material="color:#0ea5e9; opacity:0.3; transparent:true" animation="property: rotation; to: -90 360 0; dur: 24000; loop: true; easing: linear"></a-torus>
 
   <a-entity position="0 2.3 0" billboard th-label="text: VEICHI AC10 Series|VFD ทรงแคบแบบ Book design; width:1.3; size:32; accent:#eab308; align:center"></a-entity>
   <a-entity id="specPlate" position="0.95 1.1 0" billboard th-label="text: 1 Phase 220V / 3 Phase 380V|V/F & Vector Control|Output 0-599 Hz; width:0.8; size:20; accent:#10b981"></a-entity>
+  <a-entity leader-line="from: 0.58 1.1 0; to: 0.35 1.20 0.18; color:#10b981"></a-entity>
+
+  <!-- เส้นนำสายตาจากจอรูปคลื่นไปยังจุดวัดจริงบนวงจร -->
+  <a-entity leader-line="from: -0.72 1.60 0; to: -0.13 0.56 0.24; color:#0ea5e9"></a-entity>
+  <a-entity leader-line="from: -0.72 0.90 0; to: 0.19 1.12 0.02; color:#f97316"></a-entity>
+  <a-entity leader-line="from: -0.72 0.20 0; to: 0.15 0.56 0.24; color:#eab308"></a-entity>
+
 
   <a-entity position="-0.95 1.6 0" billboard>
     <a-entity scope="mode: ac; w: 0.45"></a-entity>
@@ -1047,7 +673,7 @@
     <a-entity position="0 -0.18 0" th-label="text: U V W (PWM); width:0.4; size:22; accent:#eab308; align:center"></a-entity>
   </a-entity>
 
-  <a-entity id="drive" position="0 0.4 0">
+  <a-entity id="drive" position="0 0.4 0" xray-sweep="enabled: false">
     <a-box id="shellFront" position="0 0.75 0.335" width="0.66" height="1.50" depth="0.015" ${M(CREAM, 0.15)}></a-box>
     <a-box position="0 0.75 -0.335" width="0.66" height="1.50" depth="0.015" ${M(CREAM_D)}></a-box>
     <a-box position="-0.335 0.75 0" width="0.015" height="1.50" depth="0.66" ${M(CREAM_D)}></a-box>
@@ -1130,6 +756,9 @@
       <a-entity position="0.22 -0.10 0.30" billboard th-label="text: U V W (OUT); width:0.35; size:24; accent:#eab308; align:center"></a-entity>
     </a-entity>
 
+    <a-entity leader-line="from: -0.16 -0.02 0.31; to: -0.13 0.12 0.27; color:#0ea5e9"></a-entity>
+    <a-entity leader-line="from: 0.22 -0.02 0.31; to: 0.15 0.12 0.27; color:#eab308"></a-entity>
+
     <a-entity id="flowAC" energy-flow="tracks: ac; color:#0ea5e9; count:5; speed:0.6; path: -0.13 0.09 0.26, -0.02 0.95 0.02, 0.10 0.34 0.06"></a-entity>
     <a-entity id="flowDC" energy-flow="tracks: dc; color:#f97316; count:6; speed:0.7; path: 0.10 0.34 0.06, 0.19 0.54 0.02, 0.19 0.86 0.02, 0.19 0.60 0.06, 0.10 0.60 0.08"></a-entity>
     <a-entity id="flowAirIn" energy-flow="tracks: air; shape: arrow; line: false; color:#38bdf8; count:3; speed:0.5; size:0.026; path: 0.52 0.20 -0.22, 0.12 0.22 -0.22, 0.10 0.60 -0.22"></a-entity>
@@ -1195,7 +824,7 @@
             const $ = s => document.querySelector(s);
             let step = 0, autoplay = true, timer = null, exploded = false, cutaway = true, mounted = 'marker';
             let userYaw = 0, rotX = 0, userScale = 0.75;
-            let faceCam = true, wallMode = false;
+            let faceCam = true, wallMode = false, xray = false;
 
             const buzz = ms => { if (navigator.vibrate) navigator.vibrate(ms); };
 
@@ -1248,7 +877,7 @@
                 setTimeout(() => {
                     userScale = mode === 'preview' ? (window.innerHeight < 800 ? 0.6 : 0.75) : 0.75;
                     $('#inSize').value = userScale;
-                    applyStep(); applySize(userScale); applyCutaway(); applyExplode(); applyPlacement();
+                    applyStep(); applySize(userScale); applyCutaway(); applyExplode(); applyPlacement(); applyXray();
                 }, 100);
             }
 
@@ -1330,8 +959,21 @@
             function applySize(v) { userScale = v; const m = $('#modelRoot'); if (m) m.setAttribute('scale', `${v} ${v} ${v}`); $('#valSize').textContent = Number(v).toFixed(2) + 'x'; }
             $('#inSize').addEventListener('input', e => applySize(+e.target.value));
 
-            function applyCutaway() { const s = $('#shellFront'); if (s) s.setAttribute('material', 'opacity', cutaway ? 0.15 : 0.95); }
+            function applyCutaway() { const s = $('#shellFront'); if (s) s.setAttribute('material', 'opacity', xray ? 0.95 : (cutaway ? 0.15 : 0.95)); }
             $('#btnCut').onclick = () => { cutaway = !cutaway; $('#btnCut').classList.toggle('active', cutaway); $('#btnCut').textContent = cutaway ? 'เปิดฝา' : 'ปิดฝา'; applyCutaway(); buzz(10); };
+
+            /* ขณะสแกน ฝาหน้าจะทึบ เพื่อให้เห็นระนาบเฉือนเข้าไปในเนื้อเครื่องชัดเจน */
+            function applyXray() {
+                const d = $('#drive');
+                if (d) d.setAttribute('xray-sweep', 'enabled', xray);
+                applyCutaway();
+            }
+            $('#btnXray').onclick = () => {
+                xray = !xray;
+                $('#btnXray').classList.toggle('active', xray);
+                $('#btnXray').textContent = xray ? 'หยุดสแกน' : 'สแกนภายใน';
+                applyXray(); buzz(14);
+            };
             function applyExplode() { document.querySelectorAll('[data-explode]').forEach(el => { if (!el.dataset.base) { const p = el.getAttribute('position') || { x: 0, y: 0, z: 0 }; el.dataset.base = `${p.x} ${p.y} ${p.z}`; } const b = el.dataset.base.split(' ').map(Number); const o = el.dataset.explode.split(' ').map(Number); const to = exploded ? `${b[0] + o[0]} ${b[1] + o[1]} ${b[2] + o[2]}` : el.dataset.base; el.setAttribute('animation__ex', { property: 'position', to, dur: 700, easing: 'easeOutCubic' }); }); }
             $('#btnExp').onclick = () => { exploded = !exploded; $('#btnExp').classList.toggle('active', exploded); applyExplode(); buzz(15); };
             $('#btnFlow').onclick = () => { VFD.flow = !VFD.flow; $('#btnFlow').classList.toggle('active', VFD.flow); buzz(10); };
@@ -1466,6 +1108,6 @@
             window.addEventListener('camera-error', () => showErr('เปิดกล้องไม่สำเร็จ ตรวจสิทธิ์กล้องของเว็บไซต์นี้'));
         })();
     </script>
-</body>
+    </body>
 
 </html>
